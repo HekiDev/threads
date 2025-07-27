@@ -12,7 +12,10 @@ class HomeController extends Controller
     public function index()
     {
         $data = Thread::query()
-            ->with('user:id,name')
+            ->with([
+                'user:id,name',
+                'topic:id,name',
+            ])
             ->paginate(10)
             ->toResourceCollection();
 
@@ -24,7 +27,10 @@ class HomeController extends Controller
     public function show($username, $uuid)
     {
         $thread = Thread::query()
-            ->with('user')
+            ->with([
+                'user:id,name',
+                'topic:id,name',
+            ])
             ->where('uuid', $uuid)
             ->firstOrFail()
             ->toResource();

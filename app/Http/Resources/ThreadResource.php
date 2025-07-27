@@ -20,6 +20,12 @@ class ThreadResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'user' => new ThreadUserResource($this->whenLoaded('user')),
+            'topic' => $this->whenLoaded('topic', function () {
+                return [
+                    'id' => $this->topic->id,
+                    'name' => $this->topic->name,
+                ];
+            }),
             'created_at' => Carbon::parse($this->created_at)->diffForHumans([
                 'parts' => 1,
                 'short' => true,

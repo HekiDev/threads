@@ -45,9 +45,9 @@ const { className, post } = defineProps<{
             <div class="flex flex-col gap-1 flex-1">
                 <p class="font-semibold flex flex-wrap items-center gap-1">
                     <span class="text-sm">{{ post.user.name }}</span>
-                    <span>
+                    <span v-if="post.topic">
                         <Badge variant="outline">
-                            Dating
+                            {{ post.topic.name }}
                         </Badge>
                     </span>
                     <span class="ml-1 text-xs text-muted-foreground font-medium">{{ post.created_at }}</span>

@@ -12,7 +12,7 @@ export interface Thread {
     uuid: string;
     title: string;
     description: string;
-    topic?: string;
+    topic?: ThreadTopic;
     user: ThreadUser;
     created_at: string;
 }
@@ -46,4 +46,9 @@ export interface PaginationMetaLinks {
     active?: boolean;
     label?: string;
     url?: string;
+}
+
+export interface ThreadTopic {
+    id: number;
+    name: string;
 }
