@@ -34,6 +34,7 @@ const threadStore = useCreateThreadStore();
         <section class="w-full lg:w-3/4">
             <slot name="content" />
         </section>
+
         <section class="w-full lg:w-1/4 flex flex-col gap-4">
             <div class="flex flex-col p-4 bg-accent/20 border rounded-lg shadow gap-4">
                 <div class="flex justify-between items-center">

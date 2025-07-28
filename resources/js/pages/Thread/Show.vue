@@ -12,11 +12,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import { ChevronRight } from 'lucide-vue-next';
+import { type SingleThread, type ThreadList } from '@/types/thread';
 import Heading from '@/components/Heading.vue';
 import HomeLayout from '@/components/home/HomeLayout.vue';
 import Post from '@/components/home/Post.vue';
-import { ChevronRight } from 'lucide-vue-next';
-import { type SingleThread, type ThreadList } from '@/types/thread';
 
 const { post, comments } = defineProps<{
     post: SingleThread;
@@ -54,8 +54,8 @@ const sortingOptions = ref([
                 </template>
                 <template v-slot:content>
                     <Post
-                        :post="post.data"
                         className="border rounded-lg"
+                        :post="post.data"
                     />
                     <div class="flex flex-col gap-3 py-4">
                         <div class="flex flex-wrap gap-2 justify-between items-center">
