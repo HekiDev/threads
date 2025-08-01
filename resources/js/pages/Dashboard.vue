@@ -16,7 +16,7 @@ const threadStore = useCreateThreadStore();
 const { threads } = defineProps<{
     threads: ThreadList;
 }>();
-
+const index = ref(2);
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
@@ -49,7 +49,7 @@ const showThread = (username: string, uuid: string|number) => {
                                 <AvatarFallback>CN</AvatarFallback>
                             </Avatar>
                             <div class="text-muted-foreground font-medium text-sm flex-1" @click="threadStore.openThreadDialog()">What's new?</div>
-                            <Button @click="threadStore.openThreadDialog()" variant="outline" class="cursor-pointer">Post</Button>
+                            <Button @click="threadStore.openThreadDialog()" class="cursor-pointer">Post</Button>
                         </div>
                         <Post
                             className="not-first:border-t not-last:border-b-0"
