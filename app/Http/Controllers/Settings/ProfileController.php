@@ -21,6 +21,7 @@ class ProfileController extends Controller
         return Inertia::render('settings/Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'tab' => 'threads',
         ]);
     }
 
@@ -59,5 +60,26 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    public function getReplies(Request $request)
+    {
+        return Inertia::render('Profile/Replies', [
+            'tab' => 'replies',
+        ]);
+    }
+
+    public function getMedia(Request $request)
+    {
+        return Inertia::render('Profile/Media', [
+            'tab' => 'media',
+        ]);
+    }
+
+    public function getShares(Request $request)
+    {
+        return Inertia::render('Profile/Shares', [
+            'tab' => 'shares',
+        ]);
     }
 }

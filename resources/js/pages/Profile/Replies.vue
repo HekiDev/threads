@@ -8,8 +8,6 @@ import ProfileLayout from '@/components/profile/ProfileLayout.vue';
 import { type BreadcrumbItem, type User } from '@/types';
 
 interface Props {
-    mustVerifyEmail: boolean;
-    status?: string;
     tab: string;
 }
 
@@ -31,7 +29,7 @@ const activeTab = ref(props.tab);
 
         <SettingsLayout>
             <ProfileLayout :activeTab="activeTab">
-                Threads
+                Replies
             </ProfileLayout>
         </SettingsLayout>
     </AppLayout>
