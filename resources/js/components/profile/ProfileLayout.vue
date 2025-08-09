@@ -64,10 +64,28 @@ const tab = ref(activeTab);
         </div>
     </div>
     <Tabs v-model="tab" class="w-full">
-        <TabsList class="w-full">
-            <Link v-for="tab, i in tabs" :key="i" :href="tab.to" class="w-full">
-                <TabsTrigger :value="tab.value" class="cursor-pointer w-full">
-                    {{ tab.label }}
+        <TabsList class="w-full
+            bg-transparent
+            border-b
+            border-b-accent
+            p-0 px-0 py-0 h-auto rounded-none"
+        >
+            <Link v-for="t, i in tabs" :key="i" :href="t.to" class="w-full">
+                <TabsTrigger :value="t.value" class="relative cursor-pointer w-full
+                    py-2
+                    rounded-none
+                    text-muted-foreground
+                    dark:data-[state=active]:border-none
+                    data-[state=active]:shadow-none
+                    data-[state=active]:text-foreground"
+                >
+                    {{ t.label }}
+                    <span
+                        :class="[
+                            'absolute left-1/2 bottom-0 h-[2px] transition-all transform -translate-x-1/2',
+                            tab === t.value ? 'w-full bg-foreground' : 'w-0 bg-transparent',
+                        ]"
+                    />
                 </TabsTrigger>
             </Link>
         </TabsList>
