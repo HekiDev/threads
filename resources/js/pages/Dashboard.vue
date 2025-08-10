@@ -2,21 +2,24 @@
 import { ref } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { type ThreadList } from '@/types/thread';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, WhenVisible } from '@inertiajs/vue3';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import Heading from '@/components/Heading.vue';
 import HomeLayout from '@/components/home/HomeLayout.vue';
 import Post from '@/components/home/Post.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { LoaderCircle } from 'lucide-vue-next';
 
 import { useCreateThreadStore } from '@/store/useCreateThreadStore';
 const threadStore = useCreateThreadStore();
 
-const { threads } = defineProps<{
+const { threads, currentPage, lastPage } = defineProps<{
     threads: ThreadList;
+    currentPage: number;
+    lastPage: number;
 }>();
-const index = ref(2);
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
@@ -58,6 +61,21 @@ const showThread = (username: string, uuid: string|number) => {
                             @click="showThread(thread.user.username, thread.uuid)"
                         />
                     </div>
+                    <WhenVisible
+                        v-if="currentPage < lastPage"
+                        always
+                        :params="{
+                            data: {
+                                page: currentPage + 1,
+                            },
+                            only: ['threads', 'currentPage', 'lastPage'],
+                            preserveUrl: true,
+                        }"
+                    >
+                        <div v-show="currentPage < lastPage" class="flex justify-center text-muted-foreground items-center text-sm py-3">
+                            <LoaderCircle class="mr-1 animate-spin text-muted-foreground"/> Loading...
+                        </div>
+                    </WhenVisible>
                 </template>
             </HomeLayout>
         </div>

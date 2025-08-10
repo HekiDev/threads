@@ -20,7 +20,9 @@ class HomeController extends Controller
             ->toResourceCollection();
 
         return Inertia::render('Dashboard', [
-            'threads' => $data,
+            'threads' => Inertia::deepMerge($data),
+            'currentPage' => $data->currentPage(),
+            'lastPage' => $data->lastPage(),
         ]);
     }
 

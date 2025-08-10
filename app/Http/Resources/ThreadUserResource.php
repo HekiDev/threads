@@ -8,6 +8,13 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class ThreadUserResource extends JsonResource
 {
     /**
+     * Disable data wrapper for this resource only.
+     *
+     * @var string|null
+     */
+    public static $wrap = null;
+
+    /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
