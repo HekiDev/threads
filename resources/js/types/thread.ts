@@ -15,6 +15,7 @@ export interface Thread {
     topic?: ThreadTopic;
     user: ThreadUser;
     created_at: string;
+    attachments: ThreadAttachment[];
 }
 
 export interface ThreadUser {
@@ -51,4 +52,13 @@ export interface PaginationMetaLinks {
 export interface ThreadTopic {
     id: number;
     name: string;
+}
+
+export interface ThreadAttachment {
+    id: number;
+    url: string;
+    file_path: string;
+    file_extension: string;
+    file_name: string;
+    type: string;
 }

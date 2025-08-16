@@ -92,7 +92,7 @@ const handleSendComment = () => {
                         <span class="ml-1 text-xs text-muted-foreground font-medium">{{ post.created_at }}</span>
                     </p>
                     <p class="text-sm">{{ post.description }}</p>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2" v-if="post.attachments.length > 0">
                         <Carousel
                             class="relative w-full"
                             :opts="{
@@ -100,11 +100,11 @@ const handleSendComment = () => {
                             }"
                         >
                             <CarouselContent class="lg:w-[250px]">
-                                <CarouselItem v-for="i in Math.floor(Math.random() * 4)" class="lg:w-[250px]" :class="['py-1', i !== 0]">
+                                <CarouselItem v-for="item, i in post.attachments" :key="i" class="lg:w-[250px]" :class="['py-1', i !== 0]">
                                     <div class="flex overflow-hidden rounded-md self-start"> 
                                         <img
                                             lazy
-                                            src="https://images.unsplash.com/photo-1490300472339-79e4adc6be4a?w=300&dpr=2&q=80"
+                                            :src="item.url"
                                             alt="image"
                                             width="250"
                                             height="300"

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignIdFor(User::class)->constrained();
-            $table->foreignIdFor(ThreadTopic::class)->constrained();
+            $table->foreignIdFor(ThreadTopic::class)->nullable()->constrained();
             $table->string('title')->nullable();
             $table->longText('description')->nullable();
             $table->timestamps();
