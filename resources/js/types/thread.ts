@@ -62,3 +62,8 @@ export interface ThreadAttachment {
     file_name: string;
     type: string;
 }
+
+export interface ThreadFilter {
+    by_followers: boolean;
+    by_following: boolean;
+}

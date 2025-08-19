@@ -99,8 +99,8 @@ const handleSendComment = () => {
                                 align: 'start',
                             }"
                         >
-                            <CarouselContent class="lg:w-[250px]">
-                                <CarouselItem v-for="item, i in post.attachments" :key="i" class="lg:w-[250px]" :class="['py-1', i !== 0]">
+                            <CarouselContent class="sm:w-[250px]">
+                                <CarouselItem v-for="item, i in post.attachments" :key="i" class="sm:w-[250px]" :class="['py-1', i !== 0]">
                                     <div class="flex overflow-hidden rounded-md self-start"> 
                                         <img
                                             lazy

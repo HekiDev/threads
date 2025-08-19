@@ -17,8 +17,13 @@ class HomeController extends Controller
         private ThreadService $threadService
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
+        $filters = [
+            'by_followers' => $request->boolean('by_followers', false),
+            'by_following' => $request->boolean('by_following', false),
+        ];
+
         $data = Thread::query()
             ->with([
                 'user:id,name',
@@ -33,6 +38,7 @@ class HomeController extends Controller
             'threads' => Inertia::deepMerge($data),
             'currentPage' => $data->currentPage(),
             'lastPage' => $data->lastPage(),
+            'filters' => $filters,
         ]);
     }
 

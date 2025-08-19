@@ -205,8 +205,8 @@ watch(() => threadStore.dialog, (value) => {
                             align: 'start',
                         }"
                     >
-                        <CarouselContent class="lg:w-[150px]">
-                            <CarouselItem v-for="item, i in filePreviews" :key="i" class="lg:w-[150px]">
+                        <CarouselContent class="sm:w-[150px]">
+                            <CarouselItem v-for="item, i in filePreviews" :key="i" class="sm:w-[150px]">
                                 <div class="relative flex overflow-hidden rounded-md self-start">
                                     <Button size="icon" class="size-7 cursor-pointer rounded-full absolute top-1 right-1"
                                         @click="removeAttachment(i)"

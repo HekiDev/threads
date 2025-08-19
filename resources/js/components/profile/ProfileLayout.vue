@@ -72,6 +72,7 @@ const tab = ref(activeTab);
         >
             <Link v-for="t, i in tabs" :key="i" :href="t.to" class="w-full">
                 <TabsTrigger :value="t.value" class="relative cursor-pointer w-full
+                    border-none
                     py-2
                     rounded-none
                     text-muted-foreground

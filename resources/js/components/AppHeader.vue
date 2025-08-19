@@ -14,7 +14,7 @@ import { getInitials } from '@/composables/useInitials';
 import { useAppearance } from '@/composables/useAppearance';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Menu, Search, House, Plus, Mail, Heart, UserRound, Moon, Sun } from 'lucide-vue-next';
+import { Menu, Search, House, Plus, MessageCircle, Heart, UserRound, Moon, Sun } from 'lucide-vue-next';
 import { computed, onMounted } from 'vue';
 import { useCreateThreadStore } from '@/store/useCreateThreadStore';
 
@@ -49,7 +49,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Messages',
         href: '/messages',
-        icon: Mail,
+        icon: MessageCircle,
     },
     {
         title: 'Activity',
@@ -106,8 +106,8 @@ onMounted(() => {
                                     :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
                                     :href="item.href"
                                 >
-                                    <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
-                                    {{ item.title }}
+                                    <component v-if="item.icon" :is="item.icon" class="h-4 w-4" />
+                                    <!-- {{ item.title }} -->
                                 </Link>
                             </NavigationMenuItem>
                         </NavigationMenuList>
