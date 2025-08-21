@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button'
 import {
     Select,
@@ -17,6 +17,9 @@ import { type SingleThread, type ThreadList } from '@/types/thread';
 import Heading from '@/components/Heading.vue';
 import HomeLayout from '@/components/home/HomeLayout.vue';
 import Post from '@/components/home/Post.vue';
+import { toast } from 'vue-sonner'
+import { useCreateThreadStore } from '@/store/useCreateThreadStore';
+const threadStore = useCreateThreadStore();
 
 const { post, comments } = defineProps<{
     post: SingleThread;
@@ -30,6 +33,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const isCommented = ref<boolean>(false);
 const sorting = ref('top');
 const sortingOptions = ref([
     {
@@ -41,6 +45,34 @@ const sortingOptions = ref([
         label: 'Recent',
     },
 ])
+
+const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: string }) => {
+    isCommented.value = false
+    threadStore.handleSubmitComment({uuid, comment})
+    .then((data: any) => {
+        isCommented.value = true
+        toast.success(data.message)
+        router.visit(route('threads.show', {
+            username: post.data.user.username,
+            uuid: post.data.uuid,
+        }), {
+            preserveScroll: true,
+            only: ['comments'],
+        })
+    })
+    .catch(error => {})
+    .finally(() => {})
+}
+
+const handleSendReply = ({comment_id, comment}: { comment_id: number|string, comment: string }) => {
+    console.log(comment_id, comment)
+    threadStore.handleSubmitCommentReply({comment_id, comment})
+    .then((data: any) => {
+        toast.success(data.message)
+    })
+    .catch(error => {})
+    .finally(() => {})
+}
 </script>
 
 <template>
@@ -56,6 +88,8 @@ const sortingOptions = ref([
                     <Post
                         className="border rounded-lg"
                         :post="post.data"
+                        :isCommented
+                        @sendComment="handleSendComment($event)"
                     />
                     <div class="flex flex-col gap-3 py-4">
                         <div class="flex flex-wrap gap-2 justify-between items-center">
@@ -79,7 +113,9 @@ const sortingOptions = ref([
                             <Post
                                 v-for="comment in comments.data" :key="comment.uuid"
                                 :post="comment"
+                                :isComment="true"
                                 className="border not-first:border-t not-last:border-b-0 first:rounded-t-lg last:rounded-b-lg"
+                                @sendReply="handleSendReply($event)"
                             />
                         </div>
                     </div>

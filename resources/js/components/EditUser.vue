@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CircleCheck } from "lucide-vue-next"
 import { type User } from '@/types';
 
 const page = usePage();
@@ -49,7 +51,12 @@ const submit = () => {
                         leave-active-class="transition ease-in-out"
                         leave-to-class="opacity-0"
                     >
-                        <p v-show="form.recentlySuccessful" class="text-sm text-neutral-600">Information saved.</p>
+                        <Alert v-show="form.recentlySuccessful" class="border-green-500 text-green-500">
+                            <CircleCheck class="h-4 w-4" />
+                            <AlertDescription class="text-green-500">
+                                Information saved.
+                            </AlertDescription>
+                        </Alert>
                     </Transition>
                 </DialogDescription>
             </DialogHeader>

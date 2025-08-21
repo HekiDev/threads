@@ -46,6 +46,34 @@ export const useCreateThreadStore = defineStore('createThreadStore', () => {
         })
     }
 
+    const handleSubmitComment = async(form: {uuid: number|string, comment: string}) => {
+        return await new Promise((resolve, reject) => {
+            axios.post(route('thread.store.comment', form.uuid), {
+                comment: form.comment,
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
+    const handleSubmitCommentReply = async({comment_id, comment}: { comment_id: number|string, comment: string }) => {
+        return await new Promise((resolve, reject) => {
+            axios.post(route('thread.store.comment-reply', comment_id), {
+                comment: comment,
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
     return {
         topics,
         dialog,
@@ -53,5 +81,7 @@ export const useCreateThreadStore = defineStore('createThreadStore', () => {
         openThreadDialog,
         handleSearchTopic,
         handleSubmitThread,
+        handleSubmitComment,
+        handleSubmitCommentReply,
     }
 })

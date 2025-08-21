@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,9 +11,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Heart, MessageCircle, Send, Ellipsis } from 'lucide-vue-next';
 import { type Thread } from '@/types/thread';
 
-const { className, post } = defineProps<{
+const { className, post, isCommented = false, isComment = false } = defineProps<{
     className?: string;
     post: Thread;
+    isCommented?: boolean;
+    isComment?: boolean;
 }>();
 
 const isOpen = ref<boolean>(false);
@@ -43,9 +45,28 @@ const buttons = ref([
     }
 ])
 
-const handleSendComment = () => {
-    console.log(comment.value)
+const emits = defineEmits<{
+    (e: 'sendComment', payload: { uuid: number|string; comment: string }): void
+    (e: 'sendReply', payload: { comment_id: number|string; comment: string }): void
+}>();
+
+const emitSendComment = (uuid: number|string) => {
+    emits('sendComment', {
+        uuid: uuid,
+        comment: comment.value,
+    })
 }
+
+const emitSendReply = (comment_id: number|string) => {
+    emits('sendReply', {
+        comment_id: comment_id,
+        comment: comment.value,
+    })
+}
+
+watch(() => isCommented, (value) => {
+    if (value) comment.value = '';
+})
 </script>
 
 <template>
@@ -91,7 +112,7 @@ const handleSendComment = () => {
                         </span>
                         <span class="ml-1 text-xs text-muted-foreground font-medium">{{ post.created_at }}</span>
                     </p>
-                    <p class="text-sm">{{ post.description }}</p>
+                    <p class="text-sm">{{ isComment ? post.comment : post.description }}</p>
                     <div class="flex gap-2" v-if="post.attachments.length > 0">
                         <Carousel
                             class="relative w-full"
@@ -121,7 +142,7 @@ const handleSendComment = () => {
                             :key="index"
                             variant="ghost"
                             class="cursor-pointer text-muted-foreground rounded-full"
-                            @click.stop="btn.onClick(post.uuid)"
+                            @click.stop="btn.onClick(isComment ? post.id : post.uuid)"
                         >
                             <component :is="btn.icon" />
                             <span v-if="btn.label">{{ btn.label }}</span>
@@ -146,7 +167,7 @@ const handleSendComment = () => {
                     </Avatar>
                     <div class="flex flex-1 gap-2">
                         <Textarea v-model="comment" rows="1" name="reply" :placeholder="`Reply to ${post.user.name}`" />
-                        <Button class="cursor-pointer rounded-full" :disabled="!comment" size="icon" @click.stop="handleSendComment()">
+                        <Button class="cursor-pointer rounded-full" :disabled="!comment" size="icon" @click.stop="isComment ? emitSendReply(post.id) : emitSendComment(post.uuid)">
                             <Send />
                         </Button>
                     </div>

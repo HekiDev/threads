@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-class Thread extends Model
+class ThreadComment extends Model
 {
+    /** @use HasFactory<\Database\Factories\ThreadCommentFactory> */
     use HasFactory;
 
     protected $guarded = [];
@@ -20,9 +20,9 @@ class Thread extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function topic(): HasOne
+    public function thread(): BelongsTo
     {
-        return $this->hasOne(ThreadTopic::class, 'id', 'thread_topic_id');
+        return $this->belongsTo(Thread::class);
     }
 
     public function attachments(): MorphMany
@@ -30,8 +30,13 @@ class Thread extends Model
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
-    public function comments(): HasMany
+    public function replies(): HasMany
     {
-        return $this->hasMany(ThreadComment::class);
+        return $this->hasMany(ThreadCommentReply::class, 'thread_comment_id', 'id');
+    }
+
+    public function subReplies(): HasMany
+    {
+        return $this->hasMany(ThreadCommentReply::class, 'thread_comment_id', 'id')->where('reply_id', '<>', null);
     }
 }

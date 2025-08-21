@@ -8,7 +8,7 @@ export interface SingleThread {
     data: Thread;
 }
 
-export interface Thread {
+export interface Thread extends ThreadComment{
     uuid: string;
     title: string;
     description: string;
@@ -16,6 +16,11 @@ export interface Thread {
     user: ThreadUser;
     created_at: string;
     attachments: ThreadAttachment[];
+}
+
+export interface ThreadComment {
+    id: number;
+    comment: string;
 }
 
 export interface ThreadUser {

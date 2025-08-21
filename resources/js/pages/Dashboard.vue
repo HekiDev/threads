@@ -11,7 +11,7 @@ import Post from '@/components/home/Post.vue';
 import ThreadPreference from '@/components/home/ThreadPreference.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { LoaderCircle, SlidersHorizontal } from 'lucide-vue-next';
-
+import { toast } from 'vue-sonner'
 import { useCreateThreadStore } from '@/store/useCreateThreadStore';
 const threadStore = useCreateThreadStore();
 
@@ -22,6 +22,7 @@ const { threads, currentPage, lastPage, filters } = defineProps<{
     filters: ThreadFilter;
 }>();
 
+const isCommented = ref<boolean>(false);
 const preferences = ref<boolean>(false);
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -42,9 +43,20 @@ const handleUpdateThreadsPreferences = (event: any) => {
         by_followers: unref(event).followersOnly.value,
         by_following: unref(event).followingOnly.value,
     }, { 
-        preserveScroll: false,
+        preserveScroll: true,
         preserveUrl: true,
     })
+}
+
+const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: string }) => {
+    isCommented.value = false
+    threadStore.handleSubmitComment({uuid, comment})
+    .then((data: any) => {
+        isCommented.value = true
+        toast.success(data.message)
+    })
+    .catch(error => {})
+    .finally(() => {})
 }
 </script>
 
@@ -79,7 +91,9 @@ const handleUpdateThreadsPreferences = (event: any) => {
                             className="not-first:border-t not-last:border-b-0"
                             v-for="thread in threads.data" :key="thread.uuid"
                             :post="thread"
+                            :isCommented
                             @click="showThread(thread.user.username, thread.uuid)"
+                            @sendComment="handleSendComment($event)"
                         />
                     </div>
                     <WhenVisible

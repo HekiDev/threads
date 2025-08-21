@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ThreadCommentRequest;
 use App\Http\Requests\ThreadRequest;
 use App\Models\Thread;
+use App\Models\ThreadComment;
+use App\Models\ThreadCommentReply;
 use App\Models\ThreadTopic;
 use App\Models\User;
 use App\Services\ThreadService;
@@ -54,10 +57,11 @@ class HomeController extends Controller
             ->firstOrFail()
             ->toResource();
 
-        $comments = Thread::query()
-            ->with(['user', 'attachments:id,url,type,attachable_id,attachable_type'])
-            ->limit(2)
-            ->paginate(2)
+        $comments = ThreadComment::query()
+            ->with(['user', 'attachments:id,url,type,attachable_id,attachable_type', 'replies'])
+            ->where('thread_id', $thread->id)
+            ->latest()
+            ->paginate(15)
             ->toResourceCollection();
 
         return Inertia::render('Thread/Show', [
@@ -83,5 +87,27 @@ class HomeController extends Controller
         $this->threadService->storeAttachments($request, $thread);
 
         return response()->json(['message' => 'Thread created successfully.']);
+    }
+
+    public function storeComment(ThreadCommentRequest $request, $uuid)
+    {
+        $thread = Thread::where('uuid', $uuid)->firstOrFail();
+        $thread->comments()->create([
+            'user_id' => auth()->user()->id,
+            'comment' => $request->comment,
+        ]);
+
+        return response()->json(['message' => 'Comment submitted successfully.']);
+    }
+
+    public function storeCommentReply(ThreadCommentRequest $request, ThreadComment $comment)
+    {
+        $reply = ThreadCommentReply::create([
+            'thread_comment_id' => $comment->id,
+            'comment' => $request->comment,
+            'user_id' => auth()->user()->id,
+        ]);
+
+        dd('ok');
     }
 }
