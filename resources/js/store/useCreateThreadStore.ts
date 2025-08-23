@@ -74,6 +74,20 @@ export const useCreateThreadStore = defineStore('createThreadStore', () => {
         })
     }
 
+    const handleSubmitCommentSubReply = async({reply_id, comment}: { reply_id: number|string, comment: string }) => {
+        return await new Promise((resolve, reject) => {
+            axios.post(route('thread.store.comment-sub-reply', reply_id), {
+                comment: comment,
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
     return {
         topics,
         dialog,
@@ -83,5 +97,6 @@ export const useCreateThreadStore = defineStore('createThreadStore', () => {
         handleSubmitThread,
         handleSubmitComment,
         handleSubmitCommentReply,
+        handleSubmitCommentSubReply,
     }
 })

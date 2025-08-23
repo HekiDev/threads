@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class ThreadCommentReply extends Model
 {
@@ -19,12 +20,17 @@ class ThreadCommentReply extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
     public function mainComment(): BelongsTo
     {
         return $this->belongsTo(ThreadComment::class, 'thread_comment_id', 'id');
     }
 
-    public function mainReplies(): BelongsTo
+    public function mainReply(): BelongsTo
     {
         return $this->belongsTo(ThreadCommentReply::class, 'reply_id', 'id');
     }

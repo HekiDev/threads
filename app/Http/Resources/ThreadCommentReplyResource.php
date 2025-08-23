@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
 
-class ThreadCommentResource extends JsonResource
+class ThreadCommentReplyResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -24,8 +24,16 @@ class ThreadCommentResource extends JsonResource
                 'parts' => 1,
                 'short' => true,
             ]),
-            'replies_count' => $this->replies_count,
-            'replies' => ThreadCommentReplyResource::collection($this->whenLoaded('replies')),
+            'main_reply' => $this->whenLoaded('mainReply', function () {
+                return [
+                    'id' => $this->mainReply->id,
+                    'comment' => $this->mainReply->comment,
+                    'user' => [
+                        'name' => $this->mainReply->user->name,
+                    ]
+                ];
+            }),
+            'sub_replies_count' => $this->sub_replies_count,
         ];
     }
 }

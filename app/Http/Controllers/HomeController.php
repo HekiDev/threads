@@ -28,6 +28,7 @@ class HomeController extends Controller
         ];
 
         $data = Thread::query()
+            ->withCount('comments')
             ->with([
                 'user:id,name',
                 'topic:id,name',
@@ -47,7 +48,11 @@ class HomeController extends Controller
 
     public function show($username, $uuid)
     {
+        $commentLimit = 15;
+        $subReplyLimit = 3;
+
         $thread = Thread::query()
+            ->withCount('comments')
             ->with([
                 'user:id,name',
                 'topic:id,name',
@@ -58,15 +63,28 @@ class HomeController extends Controller
             ->toResource();
 
         $comments = ThreadComment::query()
-            ->with(['user', 'attachments:id,url,type,attachable_id,attachable_type', 'replies'])
+            ->withCount('replies')
+            ->with([
+                'user:id,name',
+                'attachments:id,url,type,attachable_id,attachable_type',
+                'replies' => function ($query) use ($subReplyLimit) {
+                    $query->withCount('subReplies');
+                    $query->with([
+                        'mainReply.user:id,name',
+                        'user:id,name',
+                        'attachments:id,url,type,attachable_id,attachable_type',
+                    ])->latest()->limit($subReplyLimit);
+                },
+            ])
             ->where('thread_id', $thread->id)
             ->latest()
-            ->paginate(15)
+            ->paginate($commentLimit)
             ->toResourceCollection();
 
         return Inertia::render('Thread/Show', [
             'post' => $thread,
-            'comments' => $comments,
+            'comments' => Inertia::deepMerge($comments),
+            'subReplyLimit' => $subReplyLimit,
         ]);
     }
 
@@ -108,6 +126,18 @@ class HomeController extends Controller
             'user_id' => auth()->user()->id,
         ]);
 
-        dd('ok');
+        return response()->json(['message' => 'Comment submitted successfully.']);
+    }
+
+    public function storeCommentSubReply(ThreadCommentRequest $request, ThreadCommentReply $reply)
+    {
+        ThreadCommentReply::create([
+            'thread_comment_id' => $reply->thread_comment_id,
+            'reply_id' => $reply->id,
+            'comment' => $request->comment,
+            'user_id' => auth()->user()->id,
+        ]);
+
+        return response()->json(['message' => 'Comment submitted successfully.']);
     }
 }

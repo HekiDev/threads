@@ -16,11 +16,30 @@ export interface Thread extends ThreadComment{
     user: ThreadUser;
     created_at: string;
     attachments: ThreadAttachment[];
+    comments_count: number;
 }
 
 export interface ThreadComment {
     id: number;
     comment: string;
+    replies: ThreadCommentReply[];
+    replies_count: number;
+}
+
+export interface ThreadCommentReply {
+    id: number;
+    comment: string;
+    user: ThreadUser;
+    attachments: ThreadAttachment[];
+    created_at: string;
+    sub_replies_count: number;
+    main_reply?: MainReply;
+}
+
+export interface MainReply {
+    id: number;
+    comment: string;
+    user: ThreadUser;
 }
 
 export interface ThreadUser {

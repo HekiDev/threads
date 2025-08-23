@@ -9,17 +9,23 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { Textarea } from '@/components/ui/textarea'
 import { Heart, MessageCircle, Send, Ellipsis } from 'lucide-vue-next';
-import { type Thread } from '@/types/thread';
+import PostCommentReply from '@/components/home/PostCommentReply.vue';
+import { type Thread, ThreadCommentReply } from '@/types/thread';
 
-const { className, post, isCommented = false, isComment = false } = defineProps<{
+const { className, post, isCommented = false, isComment = false, subReplyLimit = 3, isSubmitting = false } = defineProps<{
     className?: string;
     post: Thread;
     isCommented?: boolean;
     isComment?: boolean;
+    subReplyLimit?: number;
+    isSubmitting?: boolean;
 }>();
 
 const isOpen = ref<boolean>(false);
 const comment = ref<string>('');
+const textareaUsername = ref<string>(post.user.name);
+const isReplyComment = ref<boolean>(false);
+const reply_id = ref<number|string>('');
 
 const buttons = ref([
     {
@@ -31,8 +37,10 @@ const buttons = ref([
     },
     {
         icon: MessageCircle,
-        label: '10',
+        label: isComment ? post.replies_count : post.comments_count,
         onClick: (id: number|string) => {
+            textareaUsername.value = post.user.name
+            isReplyComment.value = false
             isOpen.value = !isOpen.value
         }
     },
@@ -48,6 +56,7 @@ const buttons = ref([
 const emits = defineEmits<{
     (e: 'sendComment', payload: { uuid: number|string; comment: string }): void
     (e: 'sendReply', payload: { comment_id: number|string; comment: string }): void
+    (e: 'sendCommentSubReply', payload: { reply_id: number|string; comment: string }): void
 }>();
 
 const emitSendComment = (uuid: number|string) => {
@@ -60,6 +69,25 @@ const emitSendComment = (uuid: number|string) => {
 const emitSendReply = (comment_id: number|string) => {
     emits('sendReply', {
         comment_id: comment_id,
+        comment: comment.value,
+    })
+}
+
+const handleAddCommentSubReply = ({reply}: { reply: ThreadCommentReply }) => {
+    reply_id.value = reply.id
+    isReplyComment.value = true
+    textareaUsername.value = reply.user.name
+    if (isOpen.value) return
+    isOpen.value = !isOpen.value
+}
+
+const handleReactCommentSubReply = ({reply}: { reply: ThreadCommentReply }) => {
+    console.log('react', reply)
+}
+
+const emitSendCommentSubReply = () => {
+    emits('sendCommentSubReply', {
+        reply_id: reply_id.value,
         comment: comment.value,
     })
 }
@@ -98,7 +126,7 @@ watch(() => isCommented, (value) => {
                         </div>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                <Separator v-if="isOpen" orientation="vertical" class="rounded-md"/>
+                <Separator v-if="isOpen || post.replies?.length > 0" orientation="vertical" class="rounded-md"/>
             </div>
 
             <div class="flex gap-1 items-center w-full">
@@ -157,6 +185,19 @@ watch(() => isCommented, (value) => {
                 </div>
             </div>
         </div>
+        
+        <div class="flex flex-col" v-if="isComment">
+            <PostCommentReply
+                v-for="(reply, i) in post.replies" :key="reply.id"
+                :reply="reply"
+                :isLast="i === post.replies.length - 1"
+                :isOpen
+                :subReplyLimit
+                @add="handleAddCommentSubReply($event)"
+                @react="handleReactCommentSubReply($event)"
+            />
+                <span v-if="post.replies_count > subReplyLimit">Load more reply</span>
+        </div>
 
         <Collapsible v-model:open="isOpen">
             <CollapsibleContent class="cursor-auto" @click.stop>
@@ -166,8 +207,15 @@ watch(() => isCommented, (value) => {
                         <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
                     <div class="flex flex-1 gap-2">
-                        <Textarea v-model="comment" rows="1" name="reply" :placeholder="`Reply to ${post.user.name}`" />
-                        <Button class="cursor-pointer rounded-full" :disabled="!comment" size="icon" @click.stop="isComment ? emitSendReply(post.id) : emitSendComment(post.uuid)">
+                        <Textarea v-model="comment" rows="1" name="reply" :placeholder="`Reply to ${textareaUsername}`" />
+                        <Button class="cursor-pointer rounded-full" :disabled="!comment || isSubmitting" size="icon" @click.stop="emitSendCommentSubReply()"
+                            v-if="isReplyComment"
+                        >
+                            <Send />
+                        </Button>
+                        <Button v-else
+                            class="cursor-pointer rounded-full" :disabled="!comment || isSubmitting" size="icon" @click.stop="isComment ? emitSendReply(post.id) : emitSendComment(post.uuid)"
+                        >
                             <Send />
                         </Button>
                     </div>
