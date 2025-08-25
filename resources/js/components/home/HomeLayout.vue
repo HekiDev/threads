@@ -5,7 +5,13 @@ import { Separator } from '@/components/ui/separator';
 import { Heart, Ellipsis, AtSign, UsersRound, UserCheck } from 'lucide-vue-next';
 
 import { useCreateThreadStore } from '@/store/useCreateThreadStore';
+import { usePage } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
 const threadStore = useCreateThreadStore();
+
+const pageProps = usePage().props;
+const totalThreadCount = pageProps?.totalThreads ?? '0';
+const totalReactionCount = pageProps?.totalReactions ?? '0';
 </script>
 
 <template>
@@ -18,14 +24,14 @@ const threadStore = useCreateThreadStore();
                         <h1 class="font-semibold text-sm">Threads</h1>
                         <AtSign class="size-4" />
                     </div>
-                    <p class="text-muted-foreground">100+</p>
+                    <p class="text-muted-foreground">{{ totalThreadCount }}</p>
                 </div>
                 <div class="p-4 bg-accent/20 border rounded-lg shadow">
                     <div class="flex justify-between items-center">
                         <h1 class="font-semibold text-sm">Hearts</h1>
                         <Heart class="size-4" />
                     </div>
-                    <p class="text-muted-foreground">12k</p>
+                    <p class="text-muted-foreground">{{ totalReactionCount }}</p>
                 </div>
             </nav>
         </section>

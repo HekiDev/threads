@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import Avatar from '@/components/Avatar.vue'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -46,10 +46,7 @@ const buttons = ref([
         <div class="flex flex-col gap-2 items-center">
             <DropdownMenu>
                 <DropdownMenuTrigger :as-child="true" @click.stop>
-                    <Avatar class="cursor-pointer">
-                        <AvatarImage src="https://github.com/unovue.png" alt="@unovue" />
-                        <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
+                    <Avatar :user="reply.user" class="cursor-pointer" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" class="w-56">
                     <div class="flex flex-col gap-3 p-3">
@@ -59,10 +56,7 @@ const buttons = ref([
                                 <p class="text-xs text-muted-foreground">{{ reply.user.username }}</p>
                             </div>
                             <div>
-                                <Avatar class="size-10">
-                                    <AvatarImage :src="reply.user.avatar" alt="@unovue" />
-                                    <AvatarFallback>CN</AvatarFallback>
-                                </Avatar>
+                                <Avatar :user="reply.user" class="size-10" />
                             </div>
                         </div>
                         <Button size="sm" class="w-full">Follow</Button>
@@ -78,7 +72,7 @@ const buttons = ref([
                     <span class="text-sm">{{ reply.user.name }}</span>
                     <span class="ml-1 text-xs text-muted-foreground font-medium">{{ reply.created_at }}</span>
                 </p>
-                <p class="text-sm">
+                <p class="text-sm whitespace-pre-line break-all">
                     <span v-if="reply.main_reply" class="bg-muted-foreground/20 p-1 px-2 rounded-full"> @{{ reply.main_reply.user.name }} </span>
                     {{ reply.comment }}
                 </p>

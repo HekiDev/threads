@@ -27,6 +27,10 @@ class HomeController extends Controller
             'by_following' => $request->boolean('by_following', false),
         ];
 
+        $user = auth()->user();
+        $totalThreads = Thread::where('user_id', $user->id)->count();
+        $totalReactions = 0;
+
         $data = Thread::query()
             ->withCount('comments')
             ->with([
@@ -43,6 +47,8 @@ class HomeController extends Controller
             'currentPage' => $data->currentPage(),
             'lastPage' => $data->lastPage(),
             'filters' => $filters,
+            'totalThreads' => $totalThreads,
+            'totalReactions' => $totalReactions,
         ]);
     }
 
@@ -60,7 +66,10 @@ class HomeController extends Controller
             ])
             ->where('uuid', $uuid)
             ->firstOrFail()
-            ->toResource();
+            ->toResource()
+            ->additional([
+                'views_count' => 0,
+            ]);
 
         $comments = ThreadComment::query()
             ->withCount('replies')

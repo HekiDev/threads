@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, useTemplateRef } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/app/AppHeaderLayout.vue';
 import type { BreadcrumbItemType } from '@/types';
 import type { CarouselApi } from "@/components/ui/carousel"
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import Avatar from '@/components/Avatar.vue'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -55,6 +55,7 @@ const errors = ref<any>([]);
 const filePreviews = ref<any>([]);
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput');
 const carousel = ref<CarouselApi>()
+const user = usePage().props.auth.user;
 
 const handleSearchTopic = debounce(() => {
     threadStore.handleSearchTopic(topic.value)
@@ -134,14 +135,11 @@ watch(() => threadStore.dialog, (value) => {
             <div class="flex flex-col w-full gap-3">
                 <div class="flex gap-2 items-center">
                     <div class="">
-                        <Avatar>
-                            <AvatarImage src="https://github.com/unovue.png" alt="@unovue" />
-                            <AvatarFallback>CN</AvatarFallback>
-                        </Avatar>
+                        <Avatar :user="user" />
                     </div>
                     <div class="flex flex-1 flex-col gap-2">
                         <div class="flex gap-2 items-center">
-                            <p class="font-semibold">Tor</p>
+                            <p class="font-semibold">{{ user.name }}</p>
                             <ChevronRight class="size-4 text-muted-foreground" />
                             <Select v-model="thread.topic">
                                 <SelectTrigger>

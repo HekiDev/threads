@@ -2,8 +2,8 @@
 import { ref, unref } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { type ThreadList, type ThreadFilter } from '@/types/thread';
-import { Head, router, WhenVisible } from '@inertiajs/vue3';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Head, router, WhenVisible, usePage } from '@inertiajs/vue3';
+import Avatar from '@/components/Avatar.vue'
 import { Button } from '@/components/ui/button'
 import Heading from '@/components/Heading.vue';
 import HomeLayout from '@/components/home/HomeLayout.vue';
@@ -21,6 +21,8 @@ const { threads, currentPage, lastPage, filters } = defineProps<{
     lastPage: number;
     filters: ThreadFilter;
 }>();
+
+const user = usePage().props.auth.user;
 
 const isCommented = ref<boolean>(false);
 const preferences = ref<boolean>(false);
@@ -72,10 +74,7 @@ const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: stri
                 <template v-slot:content>
                     <div class="w-full border rounded-lg bg-accent/20 cursor-pointer">
                         <div class="flex gap-3 px-5 py-6 items-center">
-                            <Avatar>
-                                <AvatarImage src="https://github.com/unovue.png" alt="@unovue" />
-                                <AvatarFallback>CN</AvatarFallback>
-                            </Avatar>
+                            <Avatar :user="user" />
                             <div class="text-muted-foreground font-medium text-sm flex-1" @click="threadStore.openThreadDialog()">What's new?</div>
                             <Button variant="ghost" class="cursor-pointer text-muted-foreground" @click.stop="preferences = !preferences">
                                 <SlidersHorizontal />
@@ -88,6 +87,7 @@ const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: stri
                             @update:threads="handleUpdateThreadsPreferences($event)"
                         />
                         <Post
+                            :user
                             className="not-first:border-t not-last:border-b-0"
                             v-for="thread in threads.data" :key="thread.uuid"
                             :post="thread"

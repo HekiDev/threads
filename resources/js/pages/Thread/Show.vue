@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button'
 import {
     Select,
@@ -33,7 +33,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard',
     },
 ];
-
+const user = usePage().props.auth.user;
 const page = ref<number>(1);
 const isCommented = ref<boolean>(false);
 const isSubmitting = ref<boolean>(false);
@@ -50,6 +50,7 @@ const sortingOptions = ref([
 ])
 
 const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: string }) => {
+    page.value = 1
     isSubmitting.value = true
     isCommented.value = false
     threadStore.handleSubmitComment({uuid, comment})
@@ -97,6 +98,10 @@ const handleSendCommentSubReply = ({reply_id, comment}: { reply_id: number|strin
 const handleLoadMoreComments = () => {
     page.value = page.value + 1
     isSubmitting.value = true
+    refreshComments()
+}
+
+const refreshComments = () => {
     router.get(route('threads.show', {
         username: post.data.user.username,
         uuid: post.data.uuid,
@@ -126,6 +131,7 @@ const handleLoadMoreComments = () => {
                 </template>
                 <template v-slot:content>
                     <Post
+                        :user
                         className="border rounded-lg"
                         :post="post.data"
                         :isCommented
@@ -152,6 +158,7 @@ const handleLoadMoreComments = () => {
                         </div>
                         <div>
                             <Post
+                                :user
                                 v-for="comment in comments.data" :key="comment.uuid"
                                 :post="comment"
                                 :isCommented

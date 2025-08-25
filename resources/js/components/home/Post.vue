@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import Avatar from '@/components/Avatar.vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -8,11 +8,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { Textarea } from '@/components/ui/textarea'
-import { Heart, MessageCircle, Send, Ellipsis } from 'lucide-vue-next';
+import { Heart, MessageCircle, Send, Ellipsis, Images, ArrowUp, Plus } from 'lucide-vue-next';
 import PostCommentReply from '@/components/home/PostCommentReply.vue';
 import { type Thread, ThreadCommentReply } from '@/types/thread';
+import { type User } from '@/types';
 
-const { className, post, isCommented = false, isComment = false, subReplyLimit = 3, isSubmitting = false } = defineProps<{
+const { user, className, post, isCommented = false, isComment = false, subReplyLimit = 3, isSubmitting = false } = defineProps<{
+    user: User;
     className?: string;
     post: Thread;
     isCommented?: boolean;
@@ -92,6 +94,14 @@ const emitSendCommentSubReply = () => {
     })
 }
 
+const determineSendAction = () => {
+    if (isReplyComment.value) {
+        emitSendCommentSubReply()
+    } else {
+        isComment ? emitSendReply(post.id) : emitSendComment(post.uuid)
+    }
+}
+
 watch(() => isCommented, (value) => {
     if (value) comment.value = '';
 })
@@ -103,10 +113,7 @@ watch(() => isCommented, (value) => {
             <div class="flex flex-col gap-2 items-center">
                 <DropdownMenu>
                     <DropdownMenuTrigger :as-child="true" @click.stop>
-                        <Avatar class="cursor-pointer">
-                            <AvatarImage src="https://github.com/unovue.png" alt="@unovue" />
-                            <AvatarFallback>CN</AvatarFallback>
-                        </Avatar>
+                        <Avatar :user="post.user" class="cursor-pointer" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" class="w-56">
                         <div class="flex flex-col gap-3 p-3">
@@ -116,10 +123,7 @@ watch(() => isCommented, (value) => {
                                     <p class="text-xs text-muted-foreground">{{ post.user.username }}</p>
                                 </div>
                                 <div>
-                                    <Avatar class="size-10">
-                                        <AvatarImage :src="post.user.avatar" alt="@unovue" />
-                                        <AvatarFallback>CN</AvatarFallback>
-                                    </Avatar>
+                                    <Avatar :user="post.user" className="size-10" />
                                 </div>
                             </div>
                             <Button size="sm" class="w-full">Follow</Button>
@@ -140,7 +144,7 @@ watch(() => isCommented, (value) => {
                         </span>
                         <span class="ml-1 text-xs text-muted-foreground font-medium">{{ post.created_at }}</span>
                     </p>
-                    <p class="text-sm">{{ isComment ? post.comment : post.description }}</p>
+                    <p class="text-sm whitespace-pre-line break-all">{{ isComment ? post.comment : post.description }}</p>
                     <div class="flex gap-2" v-if="post.attachments.length > 0">
                         <Carousel
                             class="relative w-full"
@@ -202,22 +206,34 @@ watch(() => isCommented, (value) => {
         <Collapsible v-model:open="isOpen">
             <CollapsibleContent class="cursor-auto" @click.stop>
                 <div class="text-sm mt-2 flex gap-3">
-                    <Avatar class="cursor-pointer">
-                        <AvatarImage src="https://github.com/unovue.png" alt="@unovue" />
-                        <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
+                    <Avatar :user="user" />
                     <div class="flex flex-1 gap-2">
-                        <Textarea v-model="comment" rows="1" name="reply" :placeholder="`Reply to ${textareaUsername}`" />
-                        <Button class="cursor-pointer rounded-full" :disabled="!comment || isSubmitting" size="icon" @click.stop="emitSendCommentSubReply()"
-                            v-if="isReplyComment"
-                        >
-                            <Send />
-                        </Button>
-                        <Button v-else
-                            class="cursor-pointer rounded-full" :disabled="!comment || isSubmitting" size="icon" @click.stop="isComment ? emitSendReply(post.id) : emitSendComment(post.uuid)"
-                        >
-                            <Send />
-                        </Button>
+                        <div class="relative items-end mb-1 w-full">
+                            <Textarea
+                                v-model="comment"
+                                name="reply"
+                                :placeholder="`Reply to ${textareaUsername}`"
+                                class="flex-1 min-h-1 pb-12 resize-none overflow-hidden focus-visible:ring-0 focus-visible:border-input break-all"
+                            />
+                            <div class="absolute bottom-2 w-full flex justify-between px-2">
+                                <div class="">
+                                    <Button class="cursor-pointer" variant="ghost" size="icon" @click="[]">
+                                        <Plus />
+                                    </Button>
+                                    <Button class="cursor-pointer" variant="ghost" size="icon" @click="[]">
+                                        <Images />
+                                    </Button>
+                                </div>
+                                <Button
+                                    class="cursor-pointer"
+                                    size="icon"
+                                    :disabled="!comment || isSubmitting"
+                                    @click.stop="determineSendAction()"
+                                >
+                                    <Send />
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </CollapsibleContent>
