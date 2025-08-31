@@ -35,7 +35,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 const user = usePage().props.auth.user;
 const page = ref<number>(1);
-const isCommented = ref<boolean>(false);
+const activeToComment = ref<number|null>(null);
 const isSubmitting = ref<boolean>(false);
 const sorting = ref('top');
 const sortingOptions = ref([
@@ -52,10 +52,8 @@ const sortingOptions = ref([
 const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: string }) => {
     page.value = 1
     isSubmitting.value = true
-    isCommented.value = false
     threadStore.handleSubmitComment({uuid, comment})
     .then((data: any) => {
-        isCommented.value = true
         toast.success(data.message)
         router.reload()
     })
@@ -67,10 +65,8 @@ const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: stri
 
 const handleSendReply = ({comment_id, comment}: { comment_id: number|string, comment: string }) => {
     isSubmitting.value = true
-    isCommented.value = false
     threadStore.handleSubmitCommentReply({comment_id, comment})
     .then((data: any) => {
-        isCommented.value = true
         toast.success(data.message)
         router.reload()
     })
@@ -82,10 +78,8 @@ const handleSendReply = ({comment_id, comment}: { comment_id: number|string, com
 
 const handleSendCommentSubReply = ({reply_id, comment}: { reply_id: number|string, comment: string }) => {
     isSubmitting.value = true
-    isCommented.value = false
     threadStore.handleSubmitCommentSubReply({reply_id, comment})
     .then((data: any) => {
-        isCommented.value = true
         toast.success(data.message)
         router.reload()
     })
@@ -118,6 +112,11 @@ const refreshComments = () => {
         preserveState: true,
     })
 }
+
+const setThreadToComment = ({ index }: { index: number|null }) => {
+    activeToComment.value = null;
+    activeToComment.value = index
+}
 </script>
 
 <template>
@@ -134,9 +133,11 @@ const refreshComments = () => {
                         :user
                         className="border rounded-lg"
                         :post="post.data"
-                        :isCommented
+                        :index="null"
+                        :isCommented="activeToComment === null"
                         :isSubmitting
                         @sendComment="handleSendComment($event)"
+                        @toggleComment="setThreadToComment($event)"
                     />
                     <div class="flex flex-col gap-3 py-4">
                         <div class="flex flex-wrap gap-2 justify-between items-center">
@@ -159,15 +160,17 @@ const refreshComments = () => {
                         <div>
                             <Post
                                 :user
-                                v-for="comment in comments.data" :key="comment.uuid"
+                                v-for="(comment, index) in comments.data" :key="comment.uuid"
                                 :post="comment"
-                                :isCommented
+                                :index="index"
+                                :isCommented="activeToComment === index"
                                 :isComment="true"
                                 :subReplyLimit
                                 :isSubmitting
                                 className="border not-first:border-t not-last:border-b-0 first:rounded-t-lg last:rounded-b-lg"
                                 @sendReply="handleSendReply($event)"
                                 @sendCommentSubReply="handleSendCommentSubReply($event)"
+                                @toggleComment="setThreadToComment($event)"
                             />
                         </div>
                         <div class="flex items-center justify-center" v-if="(comments.meta.last_page ?? 0) > (comments.meta.current_page ?? 0)">

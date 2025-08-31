@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, unref } from 'vue';
+import { ref, unref, watch } from 'vue';
 import { type BreadcrumbItem } from '@/types';
 import { type ThreadList, type ThreadFilter } from '@/types/thread';
 import { Head, router, WhenVisible, usePage } from '@inertiajs/vue3';
@@ -24,7 +24,7 @@ const { threads, currentPage, lastPage, filters } = defineProps<{
 
 const user = usePage().props.auth.user;
 
-const isCommented = ref<boolean>(false);
+const activeToComment = ref<number|null>(null);
 const preferences = ref<boolean>(false);
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -51,14 +51,19 @@ const handleUpdateThreadsPreferences = (event: any) => {
 }
 
 const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: string }) => {
-    isCommented.value = false
     threadStore.handleSubmitComment({uuid, comment})
     .then((data: any) => {
-        isCommented.value = true
         toast.success(data.message)
     })
-    .catch(error => {})
+    .catch(error => {
+        toast.error('Unable to send comment.')
+    })
     .finally(() => {})
+}
+
+const setThreadToComment = ({ index }: { index: number|null }) => {
+    activeToComment.value = null;
+    activeToComment.value = index
 }
 </script>
 
@@ -89,11 +94,13 @@ const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: stri
                         <Post
                             :user
                             className="not-first:border-t not-last:border-b-0"
-                            v-for="thread in threads.data" :key="thread.uuid"
+                            v-for="(thread, index) in threads.data" :key="thread.uuid"
+                            :index
                             :post="thread"
-                            :isCommented
+                            :isCommented="activeToComment === index"
                             @click="showThread(thread.user.username, thread.uuid)"
                             @sendComment="handleSendComment($event)"
+                            @toggleComment="setThreadToComment($event)"
                         />
                     </div>
                     <WhenVisible

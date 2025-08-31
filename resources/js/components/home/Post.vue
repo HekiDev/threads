@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onUpdated, ref } from 'vue';
 import Avatar from '@/components/Avatar.vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,21 +13,40 @@ import PostCommentReply from '@/components/home/PostCommentReply.vue';
 import { type Thread, ThreadCommentReply } from '@/types/thread';
 import { type User } from '@/types';
 
-const { user, className, post, isCommented = false, isComment = false, subReplyLimit = 3, isSubmitting = false } = defineProps<{
+type PageProps = {
     user: User;
     className?: string;
     post: Thread;
+    index: number|null;
     isCommented?: boolean;
     isComment?: boolean;
     subReplyLimit?: number;
     isSubmitting?: boolean;
-}>();
+}
+
+const {
+    user,
+    className,
+    post,
+    index,
+    isCommented = false,
+    isComment = false,
+    subReplyLimit = 3,
+    isSubmitting = false
+} = defineProps<PageProps>();
 
 const isOpen = ref<boolean>(false);
 const comment = ref<string>('');
 const textareaUsername = ref<string>(post.user.name);
 const isReplyComment = ref<boolean>(false);
 const reply_id = ref<number|string>('');
+
+const emits = defineEmits<{
+    (e: 'sendComment', payload: { uuid: number|string; comment: string }): void
+    (e: 'sendReply', payload: { comment_id: number|string; comment: string }): void
+    (e: 'sendCommentSubReply', payload: { reply_id: number|string; comment: string }): void
+    (e: 'toggleComment', payload: { index: number|null }): void
+}>();
 
 const buttons = ref([
     {
@@ -40,7 +59,8 @@ const buttons = ref([
     {
         icon: MessageCircle,
         label: isComment ? post.replies_count : post.comments_count,
-        onClick: (id: number|string) => {
+        onClick: () => {
+            emits('toggleComment', { index: index })
             textareaUsername.value = post.user.name
             isReplyComment.value = false
             isOpen.value = !isOpen.value
@@ -54,12 +74,6 @@ const buttons = ref([
         }
     }
 ])
-
-const emits = defineEmits<{
-    (e: 'sendComment', payload: { uuid: number|string; comment: string }): void
-    (e: 'sendReply', payload: { comment_id: number|string; comment: string }): void
-    (e: 'sendCommentSubReply', payload: { reply_id: number|string; comment: string }): void
-}>();
 
 const emitSendComment = (uuid: number|string) => {
     emits('sendComment', {
@@ -95,6 +109,7 @@ const emitSendCommentSubReply = () => {
 }
 
 const determineSendAction = () => {
+    emits('toggleComment', { index: index })
     if (isReplyComment.value) {
         emitSendCommentSubReply()
     } else {
@@ -102,8 +117,10 @@ const determineSendAction = () => {
     }
 }
 
-watch(() => isCommented, (value) => {
-    if (value) comment.value = '';
+onUpdated(() => {
+    if (isCommented) {
+        comment.value = ''
+    }
 })
 </script>
 
@@ -210,6 +227,7 @@ watch(() => isCommented, (value) => {
                     <div class="flex flex-1 gap-2">
                         <div class="relative items-end mb-1 w-full">
                             <Textarea
+                                @focus="emits('toggleComment', { index: index })"
                                 v-model="comment"
                                 name="reply"
                                 :placeholder="`Reply to ${textareaUsername}`"

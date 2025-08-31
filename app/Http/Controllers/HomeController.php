@@ -82,7 +82,7 @@ class HomeController extends Controller
                         'mainReply.user:id,name',
                         'user:id,name',
                         'attachments:id,url,type,attachable_id,attachable_type',
-                    ])->latest()->limit($subReplyLimit);
+                    ])->oldest()->limit($subReplyLimit);
                 },
             ])
             ->where('thread_id', $thread->id)
