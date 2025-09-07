@@ -13,17 +13,19 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { ChevronRight, ArrowDown, LoaderCircle } from 'lucide-vue-next';
-import { type SingleThread, type ThreadList } from '@/types/thread';
+import { type SingleThread, type ThreadList, type ThreadCommentReply } from '@/types/thread';
 import Heading from '@/components/Heading.vue';
 import HomeLayout from '@/components/home/HomeLayout.vue';
 import Post from '@/components/home/Post.vue';
 import { toast } from 'vue-sonner'
+import { debounce } from "@/lib/debounce";
 import { useCreateThreadStore } from '@/store/useCreateThreadStore';
 const threadStore = useCreateThreadStore();
 
-const { post, comments, subReplyLimit } = defineProps<{
+const { post, comments, sorting, subReplyLimit } = defineProps<{
     post: SingleThread;
     comments: ThreadList;
+    sorting: string;
     subReplyLimit: number;
 }>();
 
@@ -37,7 +39,7 @@ const user = usePage().props.auth.user;
 const page = ref<number>(1);
 const activeToComment = ref<number|null>(null);
 const isSubmitting = ref<boolean>(false);
-const sorting = ref('top');
+const commentSorting = ref<string>(sorting);
 const sortingOptions = ref([
     {
         value: 'top',
@@ -55,7 +57,7 @@ const handleSendComment = ({uuid, comment}: { uuid: number|string, comment: stri
     threadStore.handleSubmitComment({uuid, comment})
     .then((data: any) => {
         toast.success(data.message)
-        router.reload()
+        handleCommentSorting()
     })
     .catch(error => {})
     .finally(() => {
@@ -68,7 +70,7 @@ const handleSendReply = ({comment_id, comment}: { comment_id: number|string, com
     threadStore.handleSubmitCommentReply({comment_id, comment})
     .then((data: any) => {
         toast.success(data.message)
-        router.reload()
+        handleCommentSorting()
     })
     .catch(error => {})
     .finally(() => {
@@ -81,7 +83,7 @@ const handleSendCommentSubReply = ({reply_id, comment}: { reply_id: number|strin
     threadStore.handleSubmitCommentSubReply({reply_id, comment})
     .then((data: any) => {
         toast.success(data.message)
-        router.reload()
+        handleCommentSorting()
     })
     .catch(error => {})
     .finally(() => {
@@ -117,6 +119,47 @@ const setThreadToComment = ({ index }: { index: number|null }) => {
     activeToComment.value = null;
     activeToComment.value = index
 }
+
+const handleToggleReact = debounce(({ uuid, reaction, isComment }: { uuid: number|string, reaction: string, isComment: boolean }) => {
+    if (isComment) {
+        threadStore.handleSubmitCommentReaction({uuid, reaction})
+        .then((data: any) => {})
+        .catch(error => {
+            toast.error('Unable to react.')
+        })
+    } else {
+        threadStore.handleSubmitThreadReaction({uuid, reaction})
+        .then((data: any) => {})
+        .catch(error => {
+            toast.error('Unable to react.')
+        })
+    }
+})
+
+const handleToggleSubReplyReact = debounce(({ sub_reply, reaction }: { sub_reply: ThreadCommentReply, reaction: string }) => {
+    threadStore.handleSubmitCommentSubReplyReaction({
+        sub_reply_id: sub_reply.id,
+        reaction: reaction
+    })
+    .then((data: any) => {})
+    .catch(error => {
+        toast.error('Unable to react.')
+    })
+})
+
+const handleCommentSorting = () => {
+    router.get(route('threads.show', {
+        username: post.data.user.username,
+        uuid: post.data.uuid,
+    }), {
+        sorting: commentSorting.value,
+    }, {
+        reset: ['comments'],
+        only: ['comments', 'sorting'],
+        preserveUrl: true,
+        preserveScroll: true,
+    })
+}
 </script>
 
 <template>
@@ -138,10 +181,11 @@ const setThreadToComment = ({ index }: { index: number|null }) => {
                         :isSubmitting
                         @sendComment="handleSendComment($event)"
                         @toggleComment="setThreadToComment($event)"
+                        @toggleReact="handleToggleReact($event)"
                     />
                     <div class="flex flex-col gap-3 py-4">
                         <div class="flex flex-wrap gap-2 justify-between items-center">
-                            <Select v-model="sorting">
+                            <Select v-model="commentSorting" @update:modelValue="handleCommentSorting()">
                                 <SelectTrigger>
                                     <SelectValue placeholder="Sort By" />
                                 </SelectTrigger>
@@ -171,6 +215,8 @@ const setThreadToComment = ({ index }: { index: number|null }) => {
                                 @sendReply="handleSendReply($event)"
                                 @sendCommentSubReply="handleSendCommentSubReply($event)"
                                 @toggleComment="setThreadToComment($event)"
+                                @toggleReact="handleToggleReact($event)"
+                                @toggleSubReplyReact="handleToggleSubReplyReact($event)"
                             />
                         </div>
                         <div class="flex items-center justify-center" v-if="(comments.meta.last_page ?? 0) > (comments.meta.current_page ?? 0)">

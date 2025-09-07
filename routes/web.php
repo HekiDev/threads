@@ -17,6 +17,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/thread/comment/{comment}/reply', [HomeController::class, 'storeCommentReply'])->name('thread.store.comment-reply');
     Route::post('/thread/comment/{reply}/sub-reply', [HomeController::class, 'storeCommentSubReply'])->name('thread.store.comment-sub-reply');
 
+    Route::post('/thread/react/{uuid}', [HomeController::class, 'storeReaction'])->name('thread.store.reaction');
+    Route::post('/thread/comment/{comment}/react', [HomeController::class, 'storeCommentReaction'])->name('thread.store.comment-reaction');
+    Route::post('/thread/comment/{reply}/sub-reply/react', [HomeController::class, 'storeCommentSubReplyReaction'])->name('thread.store.sub-comment-reaction');
+
     Route::get('topics', [TopicController::class, 'index'])->name('get.topics');
 });
 

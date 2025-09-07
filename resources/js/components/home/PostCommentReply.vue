@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { Carousel, CarouselContent, CarouselItem} from '@/components/ui/carousel'
 import { Heart, MessageCircle, Send, Ellipsis } from 'lucide-vue-next';
 import { type ThreadCommentReply } from '@/types/thread';
+import { debounce } from "@/lib/debounce";
 
 const { reply, isLast = false, isOpen = false } = defineProps<{
     reply: ThreadCommentReply;
@@ -14,22 +15,30 @@ const { reply, isLast = false, isOpen = false } = defineProps<{
     isOpen: boolean;
 }>();
 
+const reacted = ref<boolean>(reply.reacted);
+const reactionCount = ref<number>(reply.reactions_count);
+
 const emits = defineEmits<{
     (e: 'add', payload: { reply: ThreadCommentReply }): void
-    (e: 'react', payload: { reply: ThreadCommentReply }): void
+    (e: 'react', payload: { reply: ThreadCommentReply, reaction: string }): void
 }>();
 
 const buttons = ref([
     {
+        type: 'react',
         icon: Heart,
-        label: '0',
-        onClick: () => {
+        label: reply.reactions_count,
+        onClick: debounce(() => {
+            reacted.value = !reacted.value
+            reacted.value ? reactionCount.value++ : reactionCount.value--
             emits('react', {
                 reply: reply,
+                reaction: 'heart',
             })
-        }
+        })
     },
     {
+        type: 'comment',
         icon: MessageCircle,
         label: reply.sub_replies_count,
         onClick: () => {
@@ -107,8 +116,11 @@ const buttons = ref([
                         class="cursor-pointer text-muted-foreground rounded-full"
                         @click.stop="btn.onClick()"
                     >
-                        <component :is="btn.icon" />
-                        <span v-if="btn.label">{{ btn.label }}</span>
+                        <component :is="btn.icon"
+                            :stroke="reacted && btn.type == 'react' ? 'red' : 'currentColor'"
+                            :fill="reacted && btn.type == 'react' ? 'red' : 'none'"
+                        />
+                        <span v-if="btn.label">{{ btn.type == 'react' ? reactionCount : btn.label }}</span>
                     </Button>
                 </div>
             </div>

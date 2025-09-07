@@ -39,4 +39,21 @@ class ThreadComment extends Model
     {
         return $this->hasMany(ThreadCommentReply::class, 'thread_comment_id', 'id')->where('reply_id', '<>', null);
     }
+
+    public function reactions(): MorphMany
+    {
+        return $this->morphMany(CommentReaction::class, 'reactable');
+    }
+
+    public function createOrDeleteReaction($relation, array $attributes)
+    {
+        $existing = $relation->where($attributes)->first();
+
+        if ($existing) {
+            $existing->delete();
+            return null; // deleted
+        }
+
+        return $relation->create($attributes); // created
+    }
 }

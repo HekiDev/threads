@@ -32,6 +32,8 @@ class ThreadResource extends JsonResource
                 'short' => true,
             ]),
             'comments_count' => $this->comments_count,
+            'reactions_count' => $this->reactions_count,
+            'reacted' => $this->reacted,
         ];
     }
 }

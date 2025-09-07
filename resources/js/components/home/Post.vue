@@ -12,6 +12,7 @@ import { Heart, MessageCircle, Send, Ellipsis, Images, ArrowUp, Plus } from 'luc
 import PostCommentReply from '@/components/home/PostCommentReply.vue';
 import { type Thread, ThreadCommentReply } from '@/types/thread';
 import { type User } from '@/types';
+import { debounce } from "@/lib/debounce";
 
 type PageProps = {
     user: User;
@@ -40,23 +41,35 @@ const comment = ref<string>('');
 const textareaUsername = ref<string>(post.user.name);
 const isReplyComment = ref<boolean>(false);
 const reply_id = ref<number|string>('');
+const reacted = ref<boolean>(post.reacted);
+const reactionCount = ref<number>(post.reactions_count);
 
 const emits = defineEmits<{
     (e: 'sendComment', payload: { uuid: number|string; comment: string }): void
     (e: 'sendReply', payload: { comment_id: number|string; comment: string }): void
     (e: 'sendCommentSubReply', payload: { reply_id: number|string; comment: string }): void
     (e: 'toggleComment', payload: { index: number|null }): void
+    (e: 'toggleReact', payload: { uuid: number|string; reaction: string, isComment: boolean }): void
+    (e: 'toggleSubReplyReact', payload: { sub_reply: ThreadCommentReply, reaction: string }): void
 }>();
 
 const buttons = ref([
     {
+        type: 'react',
         icon: Heart,
-        label: '101',
-        onClick: (id: number|string) => {
-            console.log('Heart clicked', id)
-        }
+        label: reactionCount.value,
+        onClick: debounce(() => {
+            reacted.value = !reacted.value
+            reacted.value ? reactionCount.value++ : reactionCount.value--
+            emits('toggleReact', {
+                uuid: isComment ? post.id : post.uuid,
+                reaction: 'heart',
+                isComment: isComment,
+            })
+        })
     },
     {
+        type: 'comment',
         icon: MessageCircle,
         label: isComment ? post.replies_count : post.comments_count,
         onClick: () => {
@@ -67,6 +80,7 @@ const buttons = ref([
         }
     },
     {
+        type: 'send',
         icon: Send,
         label: '',
         onClick: (id: number|string) => {
@@ -97,8 +111,11 @@ const handleAddCommentSubReply = ({reply}: { reply: ThreadCommentReply }) => {
     isOpen.value = !isOpen.value
 }
 
-const handleReactCommentSubReply = ({reply}: { reply: ThreadCommentReply }) => {
-    console.log('react', reply)
+const handleReactCommentSubReply = ({reply, reaction}: { reply: ThreadCommentReply, reaction: string }) => {
+    emits('toggleSubReplyReact', {
+        sub_reply: reply,
+        reaction: reaction,
+    })
 }
 
 const emitSendCommentSubReply = () => {
@@ -193,8 +210,11 @@ onUpdated(() => {
                             class="cursor-pointer text-muted-foreground rounded-full"
                             @click.stop="btn.onClick(isComment ? post.id : post.uuid)"
                         >
-                            <component :is="btn.icon" />
-                            <span v-if="btn.label">{{ btn.label }}</span>
+                            <component :is="btn.icon"
+                                :stroke="reacted && btn.type == 'react' ? 'red' : 'currentColor'"
+                                :fill="reacted && btn.type == 'react' ? 'red' : 'none'"
+                            />
+                            <span v-if="btn.label">{{ btn.type == 'react' ? reactionCount : btn.label }}</span>
                         </Button>
                     </div>
                 </div>

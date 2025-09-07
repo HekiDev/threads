@@ -26,6 +26,8 @@ class ThreadCommentResource extends JsonResource
             ]),
             'replies_count' => $this->replies_count,
             'replies' => ThreadCommentReplyResource::collection($this->whenLoaded('replies')),
+            'reactions_count' => $this->reactions_count,
+            'reacted' => $this->reacted,
         ];
     }
 }

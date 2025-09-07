@@ -12,6 +12,7 @@ import ThreadPreference from '@/components/home/ThreadPreference.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { LoaderCircle, SlidersHorizontal } from 'lucide-vue-next';
 import { toast } from 'vue-sonner'
+import { debounce } from "@/lib/debounce";
 import { useCreateThreadStore } from '@/store/useCreateThreadStore';
 const threadStore = useCreateThreadStore();
 
@@ -65,6 +66,14 @@ const setThreadToComment = ({ index }: { index: number|null }) => {
     activeToComment.value = null;
     activeToComment.value = index
 }
+
+const handleToggleReact = debounce(({ uuid, reaction }: { uuid: number|string, reaction: string }) => {
+    threadStore.handleSubmitThreadReaction({uuid, reaction})
+    .then((data: any) => {})
+    .catch(error => {
+        toast.error('Unable to react.')
+    })
+})
 </script>
 
 <template>
@@ -101,6 +110,7 @@ const setThreadToComment = ({ index }: { index: number|null }) => {
                             @click="showThread(thread.user.username, thread.uuid)"
                             @sendComment="handleSendComment($event)"
                             @toggleComment="setThreadToComment($event)"
+                            @toggleReact="handleToggleReact($event)"
                         />
                     </div>
                     <WhenVisible

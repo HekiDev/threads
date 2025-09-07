@@ -17,6 +17,8 @@ export interface Thread extends ThreadComment{
     created_at: string;
     attachments: ThreadAttachment[];
     comments_count: number;
+    reactions_count: number;
+    reacted: boolean;
 }
 
 export interface ThreadComment {
@@ -34,6 +36,8 @@ export interface ThreadCommentReply {
     created_at: string;
     sub_replies_count: number;
     main_reply?: MainReply;
+    reactions_count: number;
+    reacted: boolean;
 }
 
 export interface MainReply {

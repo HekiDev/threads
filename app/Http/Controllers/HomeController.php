@@ -33,6 +33,13 @@ class HomeController extends Controller
 
         $data = Thread::query()
             ->withCount('comments')
+            ->withCount('reactions')
+            ->withExists(['reactions as reacted' => function ($query) use ($user) {
+                $query->where([
+                    'userable_id' => $user->id,
+                    'userable_type' => User::class,
+                ]);
+            }])
             ->with([
                 'user:id,name',
                 'topic:id,name',
@@ -56,9 +63,18 @@ class HomeController extends Controller
     {
         $commentLimit = 15;
         $subReplyLimit = 3;
+        $user = auth()->user();
+        $sorting = request('sorting', 'top');
 
         $thread = Thread::query()
             ->withCount('comments')
+            ->withCount('reactions')
+            ->withExists(['reactions as reacted' => function ($query) use ($user) {
+                $query->where([
+                    'userable_id' => $user->id,
+                    'userable_type' => User::class,
+                ]);
+            }])
             ->with([
                 'user:id,name',
                 'topic:id,name',
@@ -73,11 +89,25 @@ class HomeController extends Controller
 
         $comments = ThreadComment::query()
             ->withCount('replies')
+            ->withCount('reactions')
+            ->withExists(['reactions as reacted' => function ($query) use ($user) {
+                $query->where([
+                    'userable_id' => $user->id,
+                    'userable_type' => User::class,
+                ]);
+            }])
             ->with([
                 'user:id,name',
                 'attachments:id,url,type,attachable_id,attachable_type',
-                'replies' => function ($query) use ($subReplyLimit) {
+                'replies' => function ($query) use ($subReplyLimit, $user) {
                     $query->withCount('subReplies');
+                    $query->withCount('reactions');
+                    $query->withExists(['reactions as reacted' => function ($query) use ($user) {
+                        $query->where([
+                            'userable_id' => $user->id,
+                            'userable_type' => User::class,
+                        ]);
+                    }]);
                     $query->with([
                         'mainReply.user:id,name',
                         'user:id,name',
@@ -86,13 +116,18 @@ class HomeController extends Controller
                 },
             ])
             ->where('thread_id', $thread->id)
-            ->latest()
+            ->when(! $sorting || $sorting === 'top', function ($query) {
+                $query->orderByDesc('replies_count');
+            }, function ($query) {
+                $query->latest();
+            })
             ->paginate($commentLimit)
             ->toResourceCollection();
 
         return Inertia::render('Thread/Show', [
             'post' => $thread,
             'comments' => Inertia::deepMerge($comments),
+            'sorting' => $sorting,
             'subReplyLimit' => $subReplyLimit,
         ]);
     }
@@ -129,7 +164,7 @@ class HomeController extends Controller
 
     public function storeCommentReply(ThreadCommentRequest $request, ThreadComment $comment)
     {
-        $reply = ThreadCommentReply::create([
+        ThreadCommentReply::create([
             'thread_comment_id' => $comment->id,
             'comment' => $request->comment,
             'user_id' => auth()->user()->id,
@@ -148,5 +183,45 @@ class HomeController extends Controller
         ]);
 
         return response()->json(['message' => 'Comment submitted successfully.']);
+    }
+
+    public function storeReaction($uuid)
+    {
+        $thread = Thread::where('uuid', $uuid)->firstOrFail();
+        $thread->createOrDeleteReaction($thread->reactions(),
+            [
+                'type' => request('reaction'),
+                'userable_id' => auth()->id(),
+                'userable_type' => User::class,
+            ]
+        );
+
+        return response()->json(['message' => 'Reaction submitted successfully.']);
+    }
+
+    public function storeCommentReaction(ThreadComment $comment)
+    {
+        $comment->createOrDeleteReaction($comment->reactions(),
+            [
+                'type' => request('reaction'),
+                'userable_id' => auth()->id(),
+                'userable_type' => User::class,
+            ]
+        );
+
+        return response()->json(['message' => 'Reaction submitted successfully.']);
+    }
+
+    public function storeCommentSubReplyReaction(ThreadCommentReply $reply)
+    {
+        $reply->createOrDeleteReaction($reply->reactions(),
+            [
+                'type' => request('reaction'),
+                'userable_id' => auth()->id(),
+                'userable_type' => User::class,
+            ]
+        );
+
+        return response()->json(['message' => 'Reaction submitted successfully.']);
     }
 }

@@ -88,6 +88,48 @@ export const useCreateThreadStore = defineStore('createThreadStore', () => {
         })
     }
 
+    const handleSubmitThreadReaction = async({uuid, reaction}: { uuid: number|string, reaction: string }) => {
+        return await new Promise((resolve, reject) => {
+            axios.post(route('thread.store.reaction', uuid), {
+                reaction: reaction,
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
+    const handleSubmitCommentReaction = async({uuid, reaction}: { uuid: number|string, reaction: string }) => {
+        return await new Promise((resolve, reject) => {
+            axios.post(route('thread.store.comment-reaction', uuid), {
+                reaction: reaction,
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
+    const handleSubmitCommentSubReplyReaction = async({sub_reply_id, reaction}: { sub_reply_id: number|string, reaction: string }) => {
+        return await new Promise((resolve, reject) => {
+            axios.post(route('thread.store.sub-comment-reaction', sub_reply_id), {
+                reaction: reaction,
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
     return {
         topics,
         dialog,
@@ -98,5 +140,8 @@ export const useCreateThreadStore = defineStore('createThreadStore', () => {
         handleSubmitComment,
         handleSubmitCommentReply,
         handleSubmitCommentSubReply,
+        handleSubmitThreadReaction,
+        handleSubmitCommentReaction,
+        handleSubmitCommentSubReplyReaction,
     }
 })

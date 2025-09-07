@@ -34,6 +34,8 @@ class ThreadCommentReplyResource extends JsonResource
                 ];
             }),
             'sub_replies_count' => $this->sub_replies_count,
+            'reactions_count' => $this->reactions_count,
+            'reacted' => $this->reacted,
         ];
     }
 }
