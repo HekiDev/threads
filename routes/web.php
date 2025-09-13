@@ -22,6 +22,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/thread/comment/{reply}/sub-reply/react', [HomeController::class, 'storeCommentSubReplyReaction'])->name('thread.store.sub-comment-reaction');
 
     Route::get('topics', [TopicController::class, 'index'])->name('get.topics');
+
+    Route::get('/thread/comment/{comment_id}/replies', [HomeController::class, 'getMoreReplies'])->name('thread.more-replies');
 });
 
 require __DIR__.'/settings.php';

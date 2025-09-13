@@ -8,11 +8,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import { Textarea } from '@/components/ui/textarea'
-import { Heart, MessageCircle, Send, Ellipsis, Images, ArrowUp, Plus } from 'lucide-vue-next';
+import { Heart, MessageCircle, Send, Ellipsis, Images, LoaderCircle, Plus } from 'lucide-vue-next';
 import PostCommentReply from '@/components/home/PostCommentReply.vue';
 import { type Thread, ThreadCommentReply } from '@/types/thread';
 import { type User } from '@/types';
 import { debounce } from "@/lib/debounce";
+import { useCreateThreadStore } from '@/store/useCreateThreadStore';
+const threadStore = useCreateThreadStore();
 
 type PageProps = {
     user: User;
@@ -43,6 +45,10 @@ const isReplyComment = ref<boolean>(false);
 const reply_id = ref<number|string>('');
 const reacted = ref<boolean>(post.reacted);
 const reactionCount = ref<number>(post.reactions_count);
+const isLoadingReplies = ref<boolean>(false);
+const repliesPage = ref<number>(2);
+const repliesCurrentPage = ref<number>(0);
+const repliesLastPage = ref<number>(3);
 
 const emits = defineEmits<{
     (e: 'sendComment', payload: { uuid: number|string; comment: string }): void
@@ -132,6 +138,21 @@ const determineSendAction = () => {
     } else {
         isComment ? emitSendReply(post.id) : emitSendComment(post.uuid)
     }
+}
+
+const handleLoadMoreReply = () => {
+    isLoadingReplies.value = true
+    threadStore.getMoreReplies({
+        comment_id: post.id,
+        page: repliesPage.value,
+    }).then((data: any) => {
+        repliesPage.value++
+        repliesCurrentPage.value = data.currentPage
+        repliesLastPage.value = data.lastPage
+        post.replies = post.replies.concat(data.data)
+    }).finally(() => {
+        isLoadingReplies.value = false
+    })
 }
 
 onUpdated(() => {
@@ -237,7 +258,13 @@ onUpdated(() => {
                 @add="handleAddCommentSubReply($event)"
                 @react="handleReactCommentSubReply($event)"
             />
-                <span v-if="post.replies_count > subReplyLimit">Load more reply</span>
+                <Button variant="link" class="cursor-pointer self-start h-5 px-0 text-muted-foreground"
+                    v-if="post.replies_count > subReplyLimit && repliesCurrentPage < repliesLastPage"
+                    :disabled="isLoadingReplies"
+                    @click.stop="handleLoadMoreReply()"
+                >
+                    Load more reply <LoaderCircle v-if="isLoadingReplies" class="animate-spin text-muted-foreground"/>
+                </Button>
         </div>
 
         <Collapsible v-model:open="isOpen">

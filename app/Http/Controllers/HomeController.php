@@ -112,7 +112,7 @@ class HomeController extends Controller
                         'mainReply.user:id,name',
                         'user:id,name',
                         'attachments:id,url,type,attachable_id,attachable_type',
-                    ])->oldest()->limit($subReplyLimit);
+                    ])->latest()->limit($subReplyLimit);
                 },
             ])
             ->where('thread_id', $thread->id)
@@ -129,6 +129,37 @@ class HomeController extends Controller
             'comments' => Inertia::deepMerge($comments),
             'sorting' => $sorting,
             'subReplyLimit' => $subReplyLimit,
+        ]);
+    }
+
+    public function getMoreReplies($comment_id)
+    {
+        $user = auth()->user();
+        $limit = 3;
+
+        $replies = ThreadCommentReply::query()
+            ->where('thread_comment_id', $comment_id)
+            ->withCount('subReplies')
+            ->withCount('reactions')
+            ->withExists(['reactions as reacted' => function ($query) use ($user) {
+                $query->where([
+                    'userable_id' => $user->id,
+                    'userable_type' => User::class,
+                ]);
+            }])
+            ->with([
+                'mainReply.user:id,name',
+                'user:id,name',
+                'attachments:id,url,type,attachable_id,attachable_type',
+            ])
+            ->latest()
+            ->paginate($limit)
+            ->toResourceCollection();
+
+        return response()->json([
+            'data' => $replies,
+            'currentPage' => $replies->currentPage(),
+            'lastPage' => $replies->lastPage(),
         ]);
     }
 

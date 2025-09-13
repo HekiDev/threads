@@ -130,6 +130,22 @@ export const useCreateThreadStore = defineStore('createThreadStore', () => {
         })
     }
 
+    const getMoreReplies = async({comment_id, page}: { comment_id: number|string, page: number }) => {
+        return await new Promise((resolve, reject) => {
+            axios.get(route('thread.more-replies', comment_id), {
+                params: {
+                    page: page,
+                }
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
     return {
         topics,
         dialog,
@@ -143,5 +159,6 @@ export const useCreateThreadStore = defineStore('createThreadStore', () => {
         handleSubmitThreadReaction,
         handleSubmitCommentReaction,
         handleSubmitCommentSubReplyReaction,
+        getMoreReplies,
     }
 })
