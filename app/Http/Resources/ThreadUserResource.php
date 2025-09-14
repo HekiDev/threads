@@ -26,6 +26,7 @@ class ThreadUserResource extends JsonResource
             'name' => $this->name,
             'username' => '@'.str_replace(' ', '', strtolower($this->name)),
             'avatar' => null,
+            'followed' => $this->followed ?? false,
         ];
     }
 }

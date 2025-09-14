@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ThreadCommentRequest;
 use App\Http\Requests\ThreadRequest;
+use App\Http\Resources\ThreadUserResource;
 use App\Models\Thread;
 use App\Models\ThreadComment;
 use App\Models\ThreadCommentReply;
@@ -41,7 +42,14 @@ class HomeController extends Controller
                 ]);
             }])
             ->with([
-                'user:id,name',
+                'user' => function ($query) use ($user) {
+                    $query->select('id', 'name');
+                    $query->withExists([
+                        'followers as followed' => function ($query) use ($user) {
+                            $query->where('follower_id', $user->id);
+                        }
+                    ]);
+                },
                 'topic:id,name',
                 'attachments:id,url,type,attachable_id,attachable_type',
             ])
@@ -56,6 +64,7 @@ class HomeController extends Controller
             'filters' => $filters,
             'totalThreads' => $totalThreads,
             'totalReactions' => $totalReactions,
+            'following' => $this->getFollowing($user),
         ]);
     }
 
@@ -76,7 +85,14 @@ class HomeController extends Controller
                 ]);
             }])
             ->with([
-                'user:id,name',
+                'user' => function ($query) use ($user) {
+                    $query->select('id', 'name');
+                    $query->withExists([
+                        'followers as followed' => function ($query) use ($user) {
+                            $query->where('follower_id', $user->id);
+                        }
+                    ]);
+                },
                 'topic:id,name',
                 'attachments:id,url,type,attachable_id,attachable_type',
             ])
@@ -97,7 +113,14 @@ class HomeController extends Controller
                 ]);
             }])
             ->with([
-                'user:id,name',
+                'user' => function ($query) use ($user) {
+                    $query->select('id', 'name');
+                    $query->withExists([
+                        'followers as followed' => function ($query) use ($user) {
+                            $query->where('follower_id', $user->id);
+                        }
+                    ]);
+                },
                 'attachments:id,url,type,attachable_id,attachable_type',
                 'replies' => function ($query) use ($subReplyLimit, $user) {
                     $query->withCount('subReplies');
@@ -110,7 +133,14 @@ class HomeController extends Controller
                     }]);
                     $query->with([
                         'mainReply.user:id,name',
-                        'user:id,name',
+                        'user' => function ($query) use ($user) {
+                            $query->select('id', 'name');
+                            $query->withExists([
+                                'followers as followed' => function ($query) use ($user) {
+                                    $query->where('follower_id', $user->id);
+                                }
+                            ]);
+                        },
                         'attachments:id,url,type,attachable_id,attachable_type',
                     ])->latest()->limit($subReplyLimit);
                 },
@@ -129,6 +159,7 @@ class HomeController extends Controller
             'comments' => Inertia::deepMerge($comments),
             'sorting' => $sorting,
             'subReplyLimit' => $subReplyLimit,
+            'following' => $this->getFollowing($user),
         ]);
     }
 
@@ -149,7 +180,14 @@ class HomeController extends Controller
             }])
             ->with([
                 'mainReply.user:id,name',
-                'user:id,name',
+                'user' => function ($query) use ($user) {
+                    $query->select('id', 'name');
+                    $query->withExists([
+                        'followers as followed' => function ($query) use ($user) {
+                            $query->where('follower_id', $user->id);
+                        }
+                    ]);
+                },
                 'attachments:id,url,type,attachable_id,attachable_type',
             ])
             ->latest()
@@ -254,5 +292,30 @@ class HomeController extends Controller
         );
 
         return response()->json(['message' => 'Reaction submitted successfully.']);
+    }
+
+    public function followUser(User $user)
+    {
+        $authUser = auth()->user();
+
+        if ($authUser->id === $user->id) {
+            return response()->json(['message' => 'You cannot follow yourself.'], 422);
+        }
+
+        $isFollowed = $authUser->following()->where('followed_id', $user->id)->exists();
+
+        if (! $isFollowed) {
+            $authUser->following()->attach($user->id);
+            return response()->json(['message' => 'You are now following ' . $user->name]);
+        } else {
+            $authUser->following()->detach($user->id);
+            return response()->json(['message' => 'You have unfollowed ' . $user->name]);
+        }
+    }
+
+    private function getFollowing($user)
+    {
+        return $user->following()->limit(10)->get()
+            ->toResourceCollection(ThreadUserResource::class);
     }
 }

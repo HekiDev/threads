@@ -9,18 +9,21 @@ import { Heart, MessageCircle, Send, Ellipsis } from 'lucide-vue-next';
 import { type ThreadCommentReply } from '@/types/thread';
 import { debounce } from "@/lib/debounce";
 
-const { reply, isLast = false, isOpen = false } = defineProps<{
+const { reply, isLast = false, isOpen = false, isLoading = false } = defineProps<{
     reply: ThreadCommentReply;
     isLast: boolean;
     isOpen: boolean;
+    isLoading: boolean;
 }>();
 
 const reacted = ref<boolean>(reply.reacted);
 const reactionCount = ref<number>(reply.reactions_count);
+const isFollowing = ref<boolean>(reply.user.followed);
 
 const emits = defineEmits<{
     (e: 'add', payload: { reply: ThreadCommentReply }): void
     (e: 'react', payload: { reply: ThreadCommentReply, reaction: string }): void
+    (e: 'follow', payload: { reply: ThreadCommentReply }): void
 }>();
 
 const buttons = ref([
@@ -48,6 +51,13 @@ const buttons = ref([
         }
     },
 ])
+
+const emitFollowUser = debounce(() => {
+    isFollowing.value = !isFollowing.value
+    emits('follow', {
+        reply: reply,
+    })
+})
 </script>
 
 <template>
@@ -68,7 +78,12 @@ const buttons = ref([
                                 <Avatar :user="reply.user" class="size-10" />
                             </div>
                         </div>
-                        <Button size="sm" class="w-full">Follow</Button>
+                        <Button size="sm" class="w-full cursor-pointer"
+                            :disabled="isLoading"
+                            @click="emitFollowUser()"
+                        >
+                            {{ isFollowing ? 'Unfollow' : 'Follow' }}
+                        </Button>
                     </div>
                 </DropdownMenuContent>
             </DropdownMenu>

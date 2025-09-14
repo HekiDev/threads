@@ -51,6 +51,7 @@ export interface ThreadUser {
     name: string;
     username: string;
     avatar: string;
+    followed: boolean;
 }
 
 export interface PaginationLinks {

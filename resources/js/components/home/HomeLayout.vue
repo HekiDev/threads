@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import Avatar from '@/components/Avatar.vue'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator';
 import { Heart, Ellipsis, AtSign, UsersRound, UserCheck } from 'lucide-vue-next';
@@ -9,9 +9,11 @@ import { usePage } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
 const threadStore = useCreateThreadStore();
 
-const pageProps = usePage().props;
+const pageProps = <any>usePage().props;
 const totalThreadCount = pageProps?.totalThreads ?? '0';
 const totalReactionCount = pageProps?.totalReactions ?? '0';
+const following = pageProps?.following?.data ?? [];
+const followers = pageProps?.followers?.data ?? [];
 </script>
 
 <template>
@@ -47,14 +49,14 @@ const totalReactionCount = pageProps?.totalReactions ?? '0';
                     <h1 class="font-semibold text-sm">Followers</h1>
                     <UsersRound class="size-4" />
                 </div>
-                <div class="flex flex-wrap gap-2 text-sm" v-for="i in 10" :key="i">
-                    <Avatar class="h-5 w-5">
-                        <AvatarImage src="https://github.com/unovue.png" alt="@unovue" />
-                        <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
+                <div class="flex gap-2 text-sm"
+                    v-if="followers.length > 0"
+                    v-for="user in followers" :key="user.id"
+                >
+                    <Avatar :user="user" class="size-5" />
                     <div class="flex-1">
-                        <p>John Doe</p>
-                        <p class="text-xs text-muted-foreground">@johndoe</p>
+                        <p>{{ user.name }}</p>
+                        <p class="text-xs text-muted-foreground truncate text-ellipsis">{{ user.username }}</p>
                     </div>
                     <span>
                         <Button variant="ghost" size="icon" class="cursor-pointer text-muted-foreground">
@@ -62,13 +64,31 @@ const totalReactionCount = pageProps?.totalReactions ?? '0';
                         </Button>
                     </span>
                 </div>
+                <div class="flex flex-wrap gap-2">
+                    <p class="w-full text-xs text-muted-foreground text-center">You don't have followers yet</p>
+                </div>
             </div>
             <div class="flex flex-col p-4 bg-accent/20 border rounded-lg shadow gap-4">
                 <div class="flex justify-between items-center">
                     <h1 class="font-semibold text-sm">Following</h1>
                     <UserCheck class="size-4" />
                 </div>
-                <div class="flex flex-wrap gap-2">
+                <div class="flex gap-2 text-sm"
+                    v-if="following.length > 0"
+                    v-for="user in following" :key="user.id"
+                >
+                    <Avatar :user="user" class="size-5" />
+                    <div class="flex-1">
+                        <p>{{ user.name }}</p>
+                        <p class="text-xs text-muted-foreground truncate text-ellipsis">{{ user.username }}</p>
+                    </div>
+                    <span>
+                        <Button variant="ghost" size="icon" class="cursor-pointer text-muted-foreground">
+                            <Ellipsis />
+                        </Button>
+                    </span>
+                </div>
+                <div v-else class="flex flex-wrap gap-2">
                     <p class="w-full text-xs text-muted-foreground text-center">You don't follow anyone yet</p>
                 </div>
             </div>

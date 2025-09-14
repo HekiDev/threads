@@ -14,7 +14,9 @@ import { type Thread, ThreadCommentReply } from '@/types/thread';
 import { type User } from '@/types';
 import { debounce } from "@/lib/debounce";
 import { useCreateThreadStore } from '@/store/useCreateThreadStore';
+import { useUserFollowStore } from '@/store/useUserFollowStore';
 const threadStore = useCreateThreadStore();
+const followStore = useUserFollowStore();
 
 type PageProps = {
     user: User;
@@ -45,10 +47,11 @@ const isReplyComment = ref<boolean>(false);
 const reply_id = ref<number|string>('');
 const reacted = ref<boolean>(post.reacted);
 const reactionCount = ref<number>(post.reactions_count);
-const isLoadingReplies = ref<boolean>(false);
+const isLoading = ref<boolean>(false);
 const repliesPage = ref<number>(2);
 const repliesCurrentPage = ref<number>(0);
 const repliesLastPage = ref<number>(3);
+const isFollowing = ref<boolean>(post.user.followed);
 
 const emits = defineEmits<{
     (e: 'sendComment', payload: { uuid: number|string; comment: string }): void
@@ -141,7 +144,7 @@ const determineSendAction = () => {
 }
 
 const handleLoadMoreReply = () => {
-    isLoadingReplies.value = true
+    isLoading.value = true
     threadStore.getMoreReplies({
         comment_id: post.id,
         page: repliesPage.value,
@@ -151,9 +154,23 @@ const handleLoadMoreReply = () => {
         repliesLastPage.value = data.lastPage
         post.replies = post.replies.concat(data.data)
     }).finally(() => {
-        isLoadingReplies.value = false
+        isLoading.value = false
     })
 }
+
+const handleFollowUser = debounce((event?: { reply: ThreadCommentReply }) => {
+    const userId = event ? event.reply.user.id : post.user.id
+    isLoading.value = true
+    followStore.handleFollowUser(userId)
+    .then((data: any) => {
+        console.log(data)
+        isFollowing.value = !isFollowing.value
+    })
+    .catch(error => console.error(error))
+    .finally(() => {
+        isLoading.value = false
+    })
+})
 
 onUpdated(() => {
     if (isCommented) {
@@ -181,7 +198,12 @@ onUpdated(() => {
                                     <Avatar :user="post.user" className="size-10" />
                                 </div>
                             </div>
-                            <Button size="sm" class="w-full">Follow</Button>
+                            <Button size="sm" class="w-full cursor-pointer"
+                                :disabled="isLoading"
+                                @click="handleFollowUser()"
+                            >
+                                {{ isFollowing ? 'Unfollow' : 'Follow' }}
+                            </Button>
                         </div>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -255,15 +277,17 @@ onUpdated(() => {
                 :isLast="i === post.replies.length - 1"
                 :isOpen
                 :subReplyLimit
+                :isLoading
                 @add="handleAddCommentSubReply($event)"
                 @react="handleReactCommentSubReply($event)"
+                @follow="handleFollowUser($event)"
             />
                 <Button variant="link" class="cursor-pointer self-start h-5 px-0 text-muted-foreground"
                     v-if="post.replies_count > subReplyLimit && repliesCurrentPage < repliesLastPage"
-                    :disabled="isLoadingReplies"
+                    :disabled="isLoading"
                     @click.stop="handleLoadMoreReply()"
                 >
-                    Load more reply <LoaderCircle v-if="isLoadingReplies" class="animate-spin text-muted-foreground"/>
+                    Load more reply <LoaderCircle v-if="isLoading" class="animate-spin text-muted-foreground"/>
                 </Button>
         </div>
 
