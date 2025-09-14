@@ -26,7 +26,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/thread/comment/{comment_id}/replies', [HomeController::class, 'getMoreReplies'])->name('thread.more-replies');
 
     Route::post('/user/{user}/follow', [HomeController::class, 'followUser'])->name('user.follow');
-    Route::post('/user/{user}/unfollow', [HomeController::class, 'unfollowUser'])->name('user.unfollow');
 });
 
 require __DIR__.'/settings.php';
