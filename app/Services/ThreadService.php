@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Http\Resources\ThreadUserResource;
+use App\Models\CommentReaction;
+use App\Models\Thread;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
@@ -28,5 +31,24 @@ class ThreadService
                 ]);
             }
         }
+    }
+
+    public function getCounts($user)
+    {
+        $totalThreads = Thread::where('user_id', $user->id)->count();
+        $totalReactions = CommentReaction::whereRelation('reactable', 'user_id', $user->id)->count();
+        return [format_count($totalThreads), format_count($totalReactions)];
+    }
+
+    public function getFollowing($user)
+    {
+        return $user->following()->limit(10)->get()
+            ->toResourceCollection(ThreadUserResource::class);
+    }
+
+    public function getFollowers($user)
+    {
+        return $user->followers()->limit(10)->get()
+            ->toResourceCollection(ThreadUserResource::class);
     }
 }

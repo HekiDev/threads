@@ -201,7 +201,7 @@ const handleCommentSorting = () => {
                                 View activity <ChevronRight class="size-4 text-muted-foreground" />
                             </Button>
                         </div>
-                        <div>
+                        <div v-if="comments.data.length > 0">
                             <Post
                                 :user
                                 v-for="(comment, index) in comments.data" :key="comment.uuid"
@@ -218,6 +218,9 @@ const handleCommentSorting = () => {
                                 @toggleReact="handleToggleReact($event)"
                                 @toggleSubReplyReact="handleToggleSubReplyReact($event)"
                             />
+                        </div>
+                        <div v-else class="px-5 py-4 bg-accent/20 rounded-lg border text-muted-foreground text-sm text-center">
+                            No comments yet.
                         </div>
                         <div class="flex items-center justify-center" v-if="(comments.meta.last_page ?? 0) > (comments.meta.current_page ?? 0)">
                             <Button class="cursor-pointer rounded-full" :disabled="isSubmitting" @click.stop="handleLoadMoreComments()">

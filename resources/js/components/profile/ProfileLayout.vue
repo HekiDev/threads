@@ -5,16 +5,15 @@ import { ref } from 'vue';
 import DeleteUser from '@/components/DeleteUser.vue';
 import EditUser from '@/components/EditUser.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import Avatar from '@/components/Avatar.vue'
 import { Button } from '@/components/ui/button'
 import { Trash, Pencil } from 'lucide-vue-next';
 
 interface User {
-    id: number | string;
     name: string;
     username: string;
     avatar?: string;
-    follower_count: number;
+    followers_count: number;
 }
 
 const { activeTab, user } = defineProps<{
@@ -33,15 +32,12 @@ const tab = ref(activeTab);
 
 <template>
     <div class="flex justify-between items-center">
-        <div class="flex flex-col">
-            <h1 class="text-lg font-semibold">Tor Tor</h1>
-            <p class="text-sm text-muted-foreground">@tortor</p>
-            <p class="text-sm text-muted-foreground">0 followers</p>
+        <div class="flex flex-col" v-if="user">
+            <h1 class="text-lg font-semibold">{{ user.name }}</h1>
+            <p class="text-sm text-muted-foreground">{{ user.username }}</p>
+            <p class="text-sm text-muted-foreground">{{ user.followers_count }} followers</p>
         </div>
-        <Avatar class="size-16">
-            <AvatarImage src="https://github.com/unovue.png" alt="@unovue" />
-            <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
+        <Avatar v-if="user" :user="user" class="size-16" />
     </div>
     <div class="flex gap-3 w-full py-2">
         <div class="flex-1">

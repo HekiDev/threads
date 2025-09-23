@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ThreadCommentRequest;
 use App\Http\Requests\ThreadRequest;
-use App\Http\Resources\ThreadUserResource;
 use App\Models\Thread;
 use App\Models\ThreadComment;
 use App\Models\ThreadCommentReply;
@@ -29,8 +28,7 @@ class HomeController extends Controller
         ];
 
         $user = auth()->user();
-        $totalThreads = Thread::where('user_id', $user->id)->count();
-        $totalReactions = 0;
+        [$totalThreads, $totalReactions] = $this->threadService->getCounts($user);
 
         $data = Thread::query()
             ->withCount('comments')
@@ -64,7 +62,8 @@ class HomeController extends Controller
             'filters' => $filters,
             'totalThreads' => $totalThreads,
             'totalReactions' => $totalReactions,
-            'following' => $this->getFollowing($user),
+            'following' => $this->threadService->getFollowing($user),
+            'followers' => $this->threadService->getFollowers($user),
         ]);
     }
 
@@ -74,6 +73,8 @@ class HomeController extends Controller
         $subReplyLimit = 3;
         $user = auth()->user();
         $sorting = request('sorting', 'top');
+
+        [$totalThreads, $totalReactions] = $this->threadService->getCounts($user);
 
         $thread = Thread::query()
             ->withCount('comments')
@@ -159,7 +160,10 @@ class HomeController extends Controller
             'comments' => Inertia::deepMerge($comments),
             'sorting' => $sorting,
             'subReplyLimit' => $subReplyLimit,
-            'following' => $this->getFollowing($user),
+            'totalThreads' => $totalThreads,
+            'totalReactions' => $totalReactions,
+            'following' => $this->threadService->getFollowing($user),
+            'followers' => $this->threadService->getFollowers($user),
         ]);
     }
 
@@ -311,11 +315,5 @@ class HomeController extends Controller
             $authUser->following()->detach($user->id);
             return response()->json(['message' => 'You have unfollowed ' . $user->name]);
         }
-    }
-
-    private function getFollowing($user)
-    {
-        return $user->following()->limit(10)->get()
-            ->toResourceCollection(ThreadUserResource::class);
     }
 }

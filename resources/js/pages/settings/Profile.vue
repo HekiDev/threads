@@ -5,12 +5,13 @@ import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import ProfileLayout from '@/components/profile/ProfileLayout.vue';
-import { type BreadcrumbItem, type User } from '@/types';
+import { type BreadcrumbItem, type UserProfile } from '@/types';
 
 interface Props {
     mustVerifyEmail: boolean;
     status?: string;
     tab: string;
+    user: UserProfile;
 }
 
 const props = defineProps<Props>();
@@ -30,7 +31,7 @@ const activeTab = ref(props.tab);
         <Head title="Profile settings" />
 
         <SettingsLayout>
-            <ProfileLayout :activeTab="activeTab">
+            <ProfileLayout :activeTab="activeTab" :user="props.user">
                 Threads
             </ProfileLayout>
         </SettingsLayout>

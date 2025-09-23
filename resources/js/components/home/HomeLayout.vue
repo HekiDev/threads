@@ -64,7 +64,7 @@ const followers = pageProps?.followers?.data ?? [];
                         </Button>
                     </span>
                 </div>
-                <div class="flex flex-wrap gap-2">
+                <div v-else class="flex flex-wrap gap-2">
                     <p class="w-full text-xs text-muted-foreground text-center">You don't have followers yet</p>
                 </div>
             </div>

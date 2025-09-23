@@ -35,4 +35,11 @@ export interface User {
     updated_at: string;
 }
 
+export interface UserProfile {
+    name: string;
+    username: string;
+    avatar?: string;
+    followers_count: number;
+}
+
 export type BreadcrumbItemType = BreadcrumbItem;
