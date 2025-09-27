@@ -13,7 +13,7 @@ const { user, className = '' } = defineProps<{
 </script>
 <template>
     <Avatar :class="className">
-        <AvatarImage v-if="user.avatar" :src="user.avatar" :alt="user.name" />
+        <AvatarImage class="object-cover" v-if="user.avatar" :src="user.avatar" :alt="user.name" />
         <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
             {{ getInitials(user.name) }}
         </AvatarFallback>

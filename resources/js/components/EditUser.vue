@@ -17,8 +17,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { CircleCheck } from "lucide-vue-next"
 import { type User } from '@/types';
+import { ref, useTemplateRef } from 'vue';
 
 const page = usePage();
 const user = page.props.auth.user as User;
@@ -28,12 +30,34 @@ const form = useForm({
 });
 const mustVerifyEmail = page.props.mustVerifyEmail;
 const status = page.props.status;
+const avatarInput = useTemplateRef<HTMLInputElement>('avatarInput');
+const avatarPreview = ref<any|null>(null);
+const avatar = ref<null|File>(null);
 
 const submit = () => {
-    form.patch(route('profile.update'), {
+    form.transform((data) => ({
+        ...data,
+        avatar_file: avatar.value,
+    }))
+    .post(route('profile.update'), {
         preserveScroll: true,
+        onSuccess: () => {
+            avatar.value = null;
+            avatarPreview.value = user.avatar;
+        },
     });
 };
+
+const prepareAvatar = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    if (target.files) {
+        avatar.value = target.files[0]
+        if (avatarPreview.value) {
+            URL.revokeObjectURL(avatarPreview.value)
+        }
+        avatarPreview.value = URL.createObjectURL(avatar.value)
+    }
+}
 </script>
 
 <template>
@@ -61,6 +85,18 @@ const submit = () => {
                 </DialogDescription>
             </DialogHeader>
             <form @submit.prevent="submit" class="space-y-6">
+                <div class="flex flex-col gap-2 items-center justify-center">
+                    <input type="file" class="hidden" accept="image/*" ref="avatarInput" @change="prepareAvatar"/>
+                    <Avatar class="size-15">
+                        <AvatarImage class="object-cover" v-if="avatarPreview ?? user.avatar" :src="avatarPreview ?? user.avatar" :alt="user.name" />
+                        <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
+                        </AvatarFallback>
+                    </Avatar>
+                    <Button variant="outline" size="sm" type="button" @click="avatarInput?.click()">
+                        {{ user.avatar ? 'Change avatar' : 'Upload avatar' }}
+                    </Button>
+                </div>
+
                 <div class="grid gap-2">
                     <Label for="name">Name</Label>
                     <Input id="name" class="mt-1 block w-full" v-model="form.name" required autocomplete="name" placeholder="Full name" />

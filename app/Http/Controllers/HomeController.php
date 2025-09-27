@@ -41,7 +41,7 @@ class HomeController extends Controller
             }])
             ->with([
                 'user' => function ($query) use ($user) {
-                    $query->select('id', 'name');
+                    $query->select('id', 'name', 'avatar');
                     $query->withExists([
                         'followers as followed' => function ($query) use ($user) {
                             $query->where('follower_id', $user->id);
@@ -87,7 +87,7 @@ class HomeController extends Controller
             }])
             ->with([
                 'user' => function ($query) use ($user) {
-                    $query->select('id', 'name');
+                    $query->select('id', 'name', 'avatar');
                     $query->withExists([
                         'followers as followed' => function ($query) use ($user) {
                             $query->where('follower_id', $user->id);
@@ -115,7 +115,7 @@ class HomeController extends Controller
             }])
             ->with([
                 'user' => function ($query) use ($user) {
-                    $query->select('id', 'name');
+                    $query->select('id', 'name', 'avatar');
                     $query->withExists([
                         'followers as followed' => function ($query) use ($user) {
                             $query->where('follower_id', $user->id);
@@ -135,7 +135,7 @@ class HomeController extends Controller
                     $query->with([
                         'mainReply.user:id,name',
                         'user' => function ($query) use ($user) {
-                            $query->select('id', 'name');
+                            $query->select('id', 'name', 'avatar');
                             $query->withExists([
                                 'followers as followed' => function ($query) use ($user) {
                                     $query->where('follower_id', $user->id);
@@ -185,7 +185,7 @@ class HomeController extends Controller
             ->with([
                 'mainReply.user:id,name',
                 'user' => function ($query) use ($user) {
-                    $query->select('id', 'name');
+                    $query->select('id', 'name', 'avatar');
                     $query->withExists([
                         'followers as followed' => function ($query) use ($user) {
                             $query->where('follower_id', $user->id);

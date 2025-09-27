@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserProfileResource extends JsonResource
+class InertiaUserResource extends JsonResource
 {
     /**
      * Disable data wrapper for this resource only.
@@ -22,10 +22,13 @@ class UserProfileResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'name' => ucfirst($this->name),
-            'username' => '@'.str_replace(' ', '', strtolower($this->name)),
+            'id' => $this->id,
+            'name' => $this->name,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'email' => $this->email,
+            'email_verified_at' => $this->email_verified_at,
             'avatar' => $this->avatar_url,
-            'followers_count' => $this->followers_count,
         ];
     }
 }
