@@ -77,7 +77,7 @@ const handleToggleReact = debounce(({ uuid, reaction }: { uuid: number|string, r
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Threads" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="px-4 py-6">

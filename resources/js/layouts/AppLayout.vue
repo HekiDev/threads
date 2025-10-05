@@ -190,7 +190,10 @@ watch(() => threadStore.dialog, (value) => {
                 </div>
                 <div class="grid gap-1">
                     <Textarea v-model="thread.description" placeholder="What's new?"
-                        :class="errors.description ? 'border-destructive focus-visible:ring-destructive/40 ring-destructive/20 dark:ring-destructive/40 focus-visible:border-destructive' : ''"
+                        :class="[
+                            'resize-none',
+                            errors.description && 'border-destructive focus-visible:ring-destructive/40 ring-destructive/20 dark:ring-destructive/40 focus-visible:border-destructive',
+                        ]"
                     />
                     <InputError :message="errors.description?.[0] ?? ''" />
                 </div>

@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { CircleCheck } from "lucide-vue-next"
+import { CircleCheck, Upload } from "lucide-vue-next"
 import { type User } from '@/types';
 import { ref, useTemplateRef } from 'vue';
 
@@ -93,7 +93,7 @@ const prepareAvatar = (event: Event) => {
                         </AvatarFallback>
                     </Avatar>
                     <Button variant="outline" size="sm" type="button" @click="avatarInput?.click()">
-                        {{ user.avatar ? 'Change avatar' : 'Upload avatar' }}
+                        <Upload /> {{ user.avatar ? 'Change avatar' : 'Upload avatar' }}
                     </Button>
                 </div>
 
