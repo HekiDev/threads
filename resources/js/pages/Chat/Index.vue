@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Search, ArrowLeft, EllipsisVertical } from 'lucide-vue-next'
+import { Plus, Search, ArrowLeft } from 'lucide-vue-next'
 import ChatBubble from '@/components/chat/ChatBubble.vue';
 import ChatInput from '@/components/chat/ChatInput.vue';
 import { type BreadcrumbItem } from '@/types';
+import { type ChatUser, type Chat, type SingleChat, type ChatMessage } from '@/types/chat';
 import CreateChat from '@/components/chat/CreateChat.vue';
+import ChatHeader from '@/components/chat/ChatHeader.vue';
+import EmptyChat from '@/components/chat/EmptyChat.vue';
+import Avatar from '@/components/Avatar.vue';
+
+const { chats, messages, active_chat_id = null } = defineProps<{
+    chats: Chat;
+    messages?: ChatMessage;
+    active_chat_id?: number | null;
+}>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -19,11 +28,41 @@ const breadcrumbItems: BreadcrumbItem[] = [
         href: '/chats',
     },
 ];
+const isLoading = ref<boolean>(false);
+const newChatDialog = ref<boolean>(false);
+const isNewChat = ref<boolean>(false);
 const hasSelectedChat = ref<boolean>(false);
+const chat_id = ref<number|null>(active_chat_id);
+const user = ref<ChatUser>({
+    id: 1,
+    name: 'Jacquenetta Slowgrave',
+    username: '@jacquenetta',
+    avatar: 'https://bundui-images.netlify.app/avatars/01.png',
+})
 
-const handleGetChatMessages = (id: number) => {
+const handleGetChatMessages = (chat: SingleChat) => {
+    chat_id.value = chat.id
+    user.value = chat.members[0]
+    isNewChat.value = false
     hasSelectedChat.value = true
-    console.log(id)
+
+    router.get(route('chat.messages', chat.id),
+    {},{
+        onStart: () => isLoading.value = true,
+        onSuccess: () => isLoading.value = false,
+        only: ['messages', 'active_chat_id'],
+        preserveUrl: true,
+        preserveScroll: true,
+        preserveState: true,
+    })
+}
+
+const toggleCreateNewChat = (event: { user: ChatUser }) => {
+    user.value = event.user
+    chat_id.value = null
+    isNewChat.value = true
+    newChatDialog.value = false
+    hasSelectedChat.value = true
 }
 </script>
 
@@ -47,7 +86,10 @@ const handleGetChatMessages = (id: number) => {
                             <div class="flex flex-col gap-3 p-4 pb-5 overflow-hidden">
                                 <div class="flex justify-between items-center">
                                     <h1 class="font-semibold text-lg">Chats</h1>
-                                    <CreateChat>
+                                    <CreateChat
+                                        v-model:dialog="newChatDialog"
+                                        @createNewChat="toggleCreateNewChat($event)"
+                                    >
                                         <template v-slot:createChatDialogTrigger>
                                             <Button variant="outline"><Plus /></Button>
                                         </template>
@@ -63,23 +105,24 @@ const handleGetChatMessages = (id: number) => {
                                 </div>
                             </div>
                             <ScrollArea class="w-full h-full overflow-auto">
-                                <div class="flex items-center gap-3 py-2 break-all not-first:border-t not-last:border-b-0 px-4 hover:bg-accent cursor-pointer"
-                                    v-for="i in 20"
-                                    :key="i"
-                                    @click="handleGetChatMessages(i)"
+                                <div class="flex items-center gap-3 px-4 py-3 break-all select-none not-first:border-t not-last:border-b-0 hover:bg-accent cursor-pointer"
+                                    v-for="chat in chats.data"
+                                    :key="chat.id"
+                                    @click="handleGetChatMessages(chat)"
+                                    :class="{'bg-accent': chat.id === chat_id}"
                                 >
-                                    <Avatar>
-                                        <AvatarImage class="object-cover" src="https://bundui-images.netlify.app/avatars/01.png" alt="avatar image" />
-                                        <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div class="truncate text-ellipsis break-all space-y-1">
+                                    <Avatar className="size-9"
+                                        v-for="member in chat.members"
+                                        :key="member.id"
+                                        :user="member"
+                                    />
+                                    <div class="truncate text-ellipsis break-all w-full">
                                         <div class="flex items-center justify-between">
-                                            <p class="text-sm font-medium truncate text-ellipsis">Jacquenetta Slowgrave</p>
-                                            <p class="text-xs text-muted-foreground">10 min ago</p>
+                                            <p class="text-sm font-medium truncate text-ellipsis">{{ chat.members[0].name }}</p>
+                                            <p class="text-xs text-muted-foreground">{{ chat.last_message.datetime }}</p>
                                         </div>
-                                        <p class="text-xs text-muted-foreground truncate text-ellipsis break-all">
-                                            <span class="font-medium">You:</span> Lorem ipsum dolor sit amet consectetur adipisicing elit. Quasi tempore tenetur explicabo quo beatae illum assumenda doloremque temporibus rerum tempora.
+                                        <p class="text-sm text-muted-foreground truncate text-ellipsis break-all">
+                                            <span class="font-medium" v-if="chat.last_message.is_mine">You:</span> {{ chat.last_message.message }}
                                         </p>
                                     </div>
                                 </div>
@@ -98,54 +141,31 @@ const handleGetChatMessages = (id: number) => {
                                     <Button class="@3xl/main:hidden" variant="outline" @click="hasSelectedChat = false">
                                         <ArrowLeft />
                                     </Button>
-                                    <div class="flex w-full items-center">
-                                        <div class="flex flex-row flex-1 gap-2 items-center">
-                                            <Avatar>
-                                                <AvatarImage class="object-cover" src="https://bundui-images.netlify.app/avatars/01.png" alt="avatar image" />
-                                                <AvatarFallback class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div class="">
-                                                <p class="font-medium">Jacquenetta Slowgrave</p>
-                                                <p class="text-xs text-muted-foreground">10 min ago</p>
-                                            </div>
-                                        </div>
-                                        <Button variant="outline">
-                                            <EllipsisVertical />
-                                        </Button>
-                                    </div>
+                                    <ChatHeader
+                                        :chat_id="chat_id"
+                                        :user="user"
+                                    />
                                 </div>
-                                <ScrollArea class="flex flex-1 overflow-auto">
+                                <ScrollArea class="flex flex-1 overflow-auto" v-if="!isNewChat && messages">
                                     <ChatBubble
-                                        v-for="i in 2"
-                                        :key="i"
-                                        :isMine="false"
-                                        :message="`Hi, how can I help you today? Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus ipsa laudantium consectetur fugit aliquam placeat rerum deleniti voluptatibus, id consequuntur labore, dolorem aperiam facere explicabo rem molestias non assumenda necessitatibus!`"
-                                        :timestamp="'10:24 AM'"
-                                        status="sent"
-                                    />
-                                    <ChatBubble
-                                        v-for="i in 1"
-                                        :key="i"
-                                        :isMine="true"
-                                        :message="`Hi, how can I help you today? Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus ipsa laudantium consectetur fugit aliquam placeat rerum deleniti voluptatibus, id consequuntur labore, dolorem aperiam facere explicabo rem molestias non assumenda necessitatibus!`"
-                                        :timestamp="'10:24 AM'"
-                                        status="read"
-                                    />
-                                    <ChatBubble
-                                        v-for="i in 1"
-                                        :key="i"
-                                        :isMine="true"
-                                        :message="`Hey?`"
-                                        :timestamp="'10:24 AM'"
-                                        status="read"
+                                        v-for="(message, index) in messages.data"
+                                        :key="message.id"
+                                        :message="message"
+                                        :previousMessage="messages.data[index + 1] ?? null"
                                     />
                                 </ScrollArea>
-                                <ChatInput />
+                                <EmptyChat
+                                    v-else
+                                    :title="`Chat with ${user.name }`"
+                                    description="Start a conversation with this user."
+                                />
+                                <ChatInput :disabled="isLoading" />
                             </div>
-                            <div class="flex items-center justify-center h-full w-full" v-else>
-                                <p class="text-muted-foreground">Select chat to start conversation</p>
-                            </div>
+                            <EmptyChat
+                                v-else
+                                title="No Selected Chat"
+                                description="Select a chat to start a conversation."
+                            />
                         </section>
                     </div>
                 </div>

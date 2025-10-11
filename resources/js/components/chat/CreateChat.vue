@@ -22,10 +22,14 @@ interface User {
     username: string;
     avatar: string;
 }
+const dialog = defineModel('dialog', { type: Boolean, default: false });
+const emits = defineEmits<{
+    (e: 'createNewChat', payload: { user: User }): void
+}>();
 
 const selectedUser = ref<null|User>(null);
 
-const users = [
+const users = ref<User[]>([
     {
         id: 1,
         name: 'Olivia Martin',
@@ -38,20 +42,28 @@ const users = [
         username: '@isabella',
         avatar: 'https://bundui-images.netlify.app/avatars/02.png',
     },
-]
+])
 
 const toggleSelectedUser = (user: User) => {
-    selectedUser.value = user;
+    if (selectedUser.value && selectedUser.value.id === user.id) {
+        selectedUser.value = null;
+    } else {
+        selectedUser.value = user;
+    }
 }
 
 const toggleNewChat = () => {
-    console.log(selectedUser.value)
+    if (! selectedUser.value) return
+
+    emits('createNewChat', {
+        user: selectedUser.value,
+    })
 }
 
 </script>
 
 <template>
-    <Dialog>
+    <Dialog v-model:open="dialog">
         <DialogTrigger as-child>
             <slot name="createChatDialogTrigger" />
         </DialogTrigger>
@@ -88,7 +100,7 @@ const toggleNewChat = () => {
             </div>
 
             <DialogFooter>
-                <Button @click="toggleNewChat()">Continue</Button>
+                <Button :disabled="!selectedUser" @click="toggleNewChat()">Continue</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

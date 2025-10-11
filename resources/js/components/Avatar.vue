@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface User {
     name: string;
-    avatar?: string;
+    avatar?: string | null;
 }
 const { user, className = '' } = defineProps<{
     user: User;

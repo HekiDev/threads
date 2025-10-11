@@ -1,37 +1,67 @@
 <script setup lang="ts">
 import { CheckCheck } from 'lucide-vue-next'
+import Avatar from '../Avatar.vue';
+import { type SingleMessage } from '@/types/chat';
 
-const { isMine, message, timestamp, status } = defineProps<{
-    isMine: boolean;
-    message: string;
-    timestamp: string;
-    status: 'sent' | 'read';
-}>();
+interface ChatBubbleProps {
+    message: SingleMessage
+    previousMessage?: SingleMessage | null;
+}
+
+const { message, previousMessage } = defineProps<ChatBubbleProps>();
+
+const sentInSameMinute = () => {
+    if (!previousMessage) return true;
+
+    const current = new Date(message.created_at).getTime();
+    const previous = new Date(previousMessage.created_at).getTime();
+    const diffInSeconds = Math.abs(current - previous) / 1000;
+
+    const isSameUser = message.user.id === previousMessage.user.id;
+    return !(isSameUser && diffInSeconds < 60);
+}
+
+const timeAgo = (timestamp: string) => {
+    return new Intl.DateTimeFormat('en-US', {
+        timeStyle: 'short',
+        }).format(new Date(timestamp));
+}
 </script>
 
 <template>
     <div
-        class="flex py-2"
-        :class="isMine ? 'justify-end' : 'justify-start'"
+        class="flex py-1"
+        :class="message.is_mine ? 'justify-end' : 'justify-start'"
     >
         <div class="flex flex-col w-max max-w-[75%] gap-1">
-            <!-- Message -->
-            <div
-                class="rounded-lg px-3 py-2 text-sm"
-                :class="isMine
-                    ? 'bg-primary text-primary-foreground rounded-br-none'
-                    : 'bg-muted text-foreground rounded-bl-none'
-                "
-            >
-                {{ message }}
+            <div class="flex">
+                <div class="place-self-end min-w-[40px]">
+                    <!-- Avatar -->
+                    <Avatar v-if="!message.is_mine && sentInSameMinute()" :user="message.user" />
+                </div>
+
+                <!-- Message -->
+                <div
+                    class="rounded-lg px-3 py-2 text-sm"
+                    :class="message.is_mine
+                        ? 'bg-primary text-primary-foreground rounded-br-none'
+                        : 'bg-muted text-foreground rounded-bl-none'
+                    "
+                >
+                    {{ message.message }}
+                </div>
             </div>
 
             <!-- Timestamp -->
             <div
+                v-if="sentInSameMinute()"
                 class="text-[11px] text-muted-foreground select-none flex"
-                :class="isMine ? 'self-end' : 'self-start'"
+                :class="message.is_mine ? 'self-end' : 'self-start'"
             >
-                {{ timestamp }} <span class="ml-1" v-if="isMine"><CheckCheck class="size-4" :class="{'text-green-500' : status === 'read'}" /></span>
+                {{ timeAgo(message.created_at) }}
+                <span class="ml-1" v-if="message.is_mine">
+                    <CheckCheck class="size-4" :class="{'text-green-500' : message.status === 'read'}" />
+                </span>
             </div>
         </div>
     </div>

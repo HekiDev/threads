@@ -9,6 +9,7 @@ use App\Models\CommentReaction;
 use App\Models\Thread;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Number;
 
 class ThreadService
 {
@@ -37,7 +38,7 @@ class ThreadService
     {
         $totalThreads = Thread::where('user_id', $user->id)->count();
         $totalReactions = CommentReaction::whereRelation('reactable', 'user_id', $user->id)->count();
-        return [format_count($totalThreads), format_count($totalReactions)];
+        return [Number::abbreviate($totalThreads), Number::abbreviate($totalReactions)];
     }
 
     public function getFollowing($user)
