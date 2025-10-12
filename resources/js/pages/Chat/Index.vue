@@ -15,19 +15,21 @@ import CreateChat from '@/components/chat/CreateChat.vue';
 import ChatHeader from '@/components/chat/ChatHeader.vue';
 import EmptyChat from '@/components/chat/EmptyChat.vue';
 import Avatar from '@/components/Avatar.vue';
+import { useChatStore } from '@/store/useChatStore';
 
 const { chats, messages, active_chat_id = null } = defineProps<{
     chats: Chat;
     messages?: ChatMessage;
     active_chat_id?: number | null;
 }>();
-
+const chatStore = useChatStore();
 const breadcrumbItems: BreadcrumbItem[] = [
     {
         title: 'Chat',
         href: '/chats',
     },
 ];
+const message = ref<string>('');
 const isLoading = ref<boolean>(false);
 const newChatDialog = ref<boolean>(false);
 const isNewChat = ref<boolean>(false);
@@ -63,6 +65,25 @@ const toggleCreateNewChat = (event: { user: ChatUser }) => {
     isNewChat.value = true
     newChatDialog.value = false
     hasSelectedChat.value = true
+}
+
+const handleSendMessage = () => {
+    if (! chat_id.value) {
+        chatStore.handleStoreChat({
+            user_id: user.value.id,
+            message: message.value,
+        })
+        .then((data: any) => {
+            router.reload()
+            message.value = ''
+            setTimeout(() => {
+                handleGetChatMessages(data.chat)
+            }, 250)
+        })
+        .catch(error => {})
+    } else {
+        console.log('existing chat')
+    }
 }
 </script>
 
@@ -104,7 +125,7 @@ const toggleCreateNewChat = (event: { user: ChatUser }) => {
                                     </div>
                                 </div>
                             </div>
-                            <ScrollArea class="w-full h-full overflow-auto">
+                            <ScrollArea class="w-full h-full overflow-auto" v-if="chats && chats.data.length">
                                 <div class="flex items-center gap-3 px-4 py-3 break-all select-none not-first:border-t not-last:border-b-0 hover:bg-accent cursor-pointer"
                                     v-for="chat in chats.data"
                                     :key="chat.id"
@@ -127,6 +148,7 @@ const toggleCreateNewChat = (event: { user: ChatUser }) => {
                                     </div>
                                 </div>
                             </ScrollArea>
+                            <div class="text-center text-muted-foreground text-sm h-full p-5" v-else>No chats available.</div>
                         </section>
 
                         <!-- Chat Messages Section -->
@@ -159,7 +181,7 @@ const toggleCreateNewChat = (event: { user: ChatUser }) => {
                                     :title="`Chat with ${user.name }`"
                                     description="Start a conversation with this user."
                                 />
-                                <ChatInput :disabled="isLoading" />
+                                <ChatInput v-model:message="message" :disabled="isLoading" @sendMessage="handleSendMessage()"/>
                             </div>
                             <EmptyChat
                                 v-else

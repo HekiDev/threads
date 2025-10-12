@@ -6,11 +6,16 @@ import { Button } from '@/components/ui/button'
 const { disabled = false } = defineProps<{
     disabled: boolean;
 }>();
+const model = defineModel<string>('message');
+const emits = defineEmits<{
+    (e: 'sendMessage'): void
+}>();
 </script>
 
 <template>
     <div class="relative items-end w-full">
         <Textarea
+            v-model="model"
             :disabled="disabled"
             name="reply"
             placeholder="Enter message.."
@@ -29,7 +34,7 @@ const { disabled = false } = defineProps<{
                 class="cursor-pointer"
                 size="icon"
                 :disabled="disabled"
-                @click.stop="[]"
+                @click.stop="emits('sendMessage')"
             >
                 <Send />
             </Button>

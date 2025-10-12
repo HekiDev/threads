@@ -14,7 +14,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Search, Check } from 'lucide-vue-next'
 import Avatar from '../Avatar.vue';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import { useChatStore } from '@/store/useChatStore';
+import { debounce } from "@/lib/debounce";
 
 interface User {
     id: number;
@@ -27,22 +29,10 @@ const emits = defineEmits<{
     (e: 'createNewChat', payload: { user: User }): void
 }>();
 
+const users = ref<User[]>([]);
+const search = ref<string>('');
+const chatStore = useChatStore();
 const selectedUser = ref<null|User>(null);
-
-const users = ref<User[]>([
-    {
-        id: 1,
-        name: 'Olivia Martin',
-        username: '@olivia',
-        avatar: 'https://bundui-images.netlify.app/avatars/01.png',
-    },
-    {
-        id: 2,
-        name: 'Isabella Nguyen',
-        username: '@isabella',
-        avatar: 'https://bundui-images.netlify.app/avatars/02.png',
-    },
-])
 
 const toggleSelectedUser = (user: User) => {
     if (selectedUser.value && selectedUser.value.id === user.id) {
@@ -60,6 +50,23 @@ const toggleNewChat = () => {
     })
 }
 
+const handleSearchUsers = debounce(() => {
+    selectedUser.value = null
+    chatStore.handleSearchUsers(search.value)
+    .then((data: any) => {
+        users.value = data
+    })
+    .catch(error => {})
+})
+
+watch(() => dialog.value, (value) => {
+    if (value) {
+        search.value = ''
+        users.value = []
+        selectedUser.value = null
+        handleSearchUsers()
+    }
+})
 </script>
 
 <template>
@@ -76,13 +83,19 @@ const toggleNewChat = () => {
             </DialogHeader>
             <div class="-mx-4">
                 <div class="relative w-full items-center">
-                    <Input id="search" type="text" placeholder="Search user..." class="pl-10 py-5 focus:flex-1 focus-visible:ring-0 focus-visible:border-input break-all border-t border-x-0 shadow-none rounded-none" />
+                    <Input class="pl-10 py-5 focus:flex-1 focus-visible:ring-0 focus-visible:border-input break-all border-t border-x-0 shadow-none rounded-none"
+                        id="search"
+                        type="text"
+                        v-model="search"
+                        placeholder="Search user..."
+                        @keyup="handleSearchUsers()"
+                    />
                     <span class="absolute start-0 inset-y-0 flex items-center justify-center px-4">
                         <Search class="size-4 text-muted-foreground" />
                     </span>
                 </div>
             </div>
-            <div class="flex flex-col -mx-2">
+            <div class="flex flex-col -mx-2" v-if="users.length">
                 <div class="py-2 px-2 flex gap-2 items-center rounded-md hover:bg-accent cursor-pointer"
                     v-for="user in users"
                     :key="user.id"
@@ -98,6 +111,7 @@ const toggleNewChat = () => {
                     </div>
                 </div>
             </div>
+            <div class="text-center text-muted-foreground text-sm" v-else>No user(s) found</div>
 
             <DialogFooter>
                 <Button :disabled="!selectedUser" @click="toggleNewChat()">Continue</Button>
