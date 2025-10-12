@@ -34,7 +34,7 @@ const isNewChat = ref<boolean>(false);
 const hasSelectedChat = ref<boolean>(false);
 const chat_id = ref<number|null>(active_chat_id);
 const user = ref<ChatUser>({
-    id: 1,
+    id: 0,
     name: 'Jacquenetta Slowgrave',
     username: '@jacquenetta',
     avatar: 'https://bundui-images.netlify.app/avatars/01.png',
@@ -48,12 +48,12 @@ const handleGetChatMessages = (chat: SingleChat) => {
 
     router.get(route('chat.messages', chat.id),
     {},{
+        preserveUrl: true,
+        preserveState: true,
+        preserveScroll: true,
+        only: ['messages', 'active_chat_id'],
         onStart: () => isLoading.value = true,
         onSuccess: () => isLoading.value = false,
-        only: ['messages', 'active_chat_id'],
-        preserveUrl: true,
-        preserveScroll: true,
-        preserveState: true,
     })
 }
 

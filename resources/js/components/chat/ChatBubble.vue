@@ -20,12 +20,6 @@ const sentInSameMinute = () => {
     const isSameUser = message.user.id === previousMessage.user.id;
     return !(isSameUser && diffInSeconds < 60);
 }
-
-const timeAgo = (timestamp: string) => {
-    return new Intl.DateTimeFormat('en-US', {
-        timeStyle: 'short',
-        }).format(new Date(timestamp));
-}
 </script>
 
 <template>
@@ -58,7 +52,7 @@ const timeAgo = (timestamp: string) => {
                 class="text-[11px] text-muted-foreground select-none flex"
                 :class="message.is_mine ? 'self-end' : 'self-start'"
             >
-                {{ timeAgo(message.created_at) }}
+                {{ message.datetime }}
                 <span class="ml-1" v-if="message.is_mine">
                     <CheckCheck class="size-4" :class="{'text-green-500' : message.status === 'read'}" />
                 </span>

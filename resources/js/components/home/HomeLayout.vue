@@ -21,19 +21,19 @@ const followers = pageProps?.followers?.data ?? [];
     <div class="flex flex-col space-y-8 md:space-y-4 lg:flex-row lg:space-y-0 lg:space-x-4">
         <section class="w-full lg:w-1/4">
             <nav class="flex flex-col gap-4">
-                <div class="p-4 bg-accent/20 border rounded-lg shadow">
+                <div class="p-4 bg-accent/20 border rounded-lg">
                     <div class="flex justify-between items-center">
                         <h1 class="font-semibold text-sm">Threads</h1>
                         <AtSign class="size-4" />
                     </div>
-                    <p class="text-muted-foreground">{{ totalThreadCount }}</p>
+                    <p class="text-muted-foreground text-sm">{{ totalThreadCount }}</p>
                 </div>
-                <div class="p-4 bg-accent/20 border rounded-lg shadow">
+                <div class="p-4 bg-accent/20 border rounded-lg">
                     <div class="flex justify-between items-center">
                         <h1 class="font-semibold text-sm">Hearts</h1>
                         <Heart class="size-4" />
                     </div>
-                    <p class="text-muted-foreground">{{ totalReactionCount }}</p>
+                    <p class="text-muted-foreground text-sm">{{ totalReactionCount }}</p>
                 </div>
             </nav>
         </section>
@@ -44,7 +44,7 @@ const followers = pageProps?.followers?.data ?? [];
         </section>
 
         <section class="w-full lg:w-1/4 flex flex-col gap-4">
-            <div class="flex flex-col p-4 bg-accent/20 border rounded-lg shadow gap-4">
+            <div class="flex flex-col p-4 bg-accent/20 border rounded-lg gap-4">
                 <div class="flex justify-between items-center">
                     <h1 class="font-semibold text-sm">Followers</h1>
                     <UsersRound class="size-4" />
@@ -68,7 +68,7 @@ const followers = pageProps?.followers?.data ?? [];
                     <p class="w-full text-xs text-muted-foreground text-center">You don't have followers yet</p>
                 </div>
             </div>
-            <div class="flex flex-col p-4 bg-accent/20 border rounded-lg shadow gap-4">
+            <div class="flex flex-col p-4 bg-accent/20 border rounded-lg gap-4">
                 <div class="flex justify-between items-center">
                     <h1 class="font-semibold text-sm">Following</h1>
                     <UserCheck class="size-4" />
