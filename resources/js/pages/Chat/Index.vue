@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -10,7 +10,7 @@ import { Plus, Search, ArrowLeft } from 'lucide-vue-next'
 import ChatBubble from '@/components/chat/ChatBubble.vue';
 import ChatInput from '@/components/chat/ChatInput.vue';
 import { type BreadcrumbItem } from '@/types';
-import { type ChatUser, type Chat, type SingleChat, type ChatMessage } from '@/types/chat';
+import { type ChatUser, type Chat, type SingleChat, type ChatMessage, SingleMessage } from '@/types/chat';
 import CreateChat from '@/components/chat/CreateChat.vue';
 import ChatHeader from '@/components/chat/ChatHeader.vue';
 import EmptyChat from '@/components/chat/EmptyChat.vue';
@@ -41,6 +41,8 @@ const user = ref<ChatUser>({
     username: '@jacquenetta',
     avatar: 'https://bundui-images.netlify.app/avatars/01.png',
 })
+const localChats = ref<SingleChat[]>([]);
+const localMessages = ref<SingleMessage[]>([]);
 
 const handleGetChatMessages = (chat: SingleChat) => {
     chat_id.value = chat.id
@@ -68,6 +70,7 @@ const toggleCreateNewChat = (event: { user: ChatUser }) => {
 }
 
 const handleSendMessage = () => {
+    isLoading.value = true;
     if (! chat_id.value) {
         chatStore.handleStoreChat({
             user_id: user.value.id,
@@ -81,10 +84,24 @@ const handleSendMessage = () => {
             }, 250)
         })
         .catch(error => {})
+        .finally(() => isLoading.value = false)
     } else {
-        console.log('existing chat')
+        chatStore.handleStoreChatMessage({
+            message: message.value,
+            chat_id: chat_id.value,
+        })
+        .then((data: any) => {
+            message.value = ''
+            localMessages.value.push(data.message)
+        })
+        .catch(error => {})
+        .finally(() => isLoading.value = false)
     }
 }
+
+watch(() => messages, (value: any) => {
+    localMessages.value = value.data;
+})
 </script>
 
 <template>
@@ -168,12 +185,12 @@ const handleSendMessage = () => {
                                         :user="user"
                                     />
                                 </div>
-                                <ScrollArea class="flex flex-1 overflow-auto" v-if="!isNewChat && messages">
+                                <ScrollArea class="flex flex-1 overflow-auto" v-if="!isNewChat && localMessages.length">
                                     <ChatBubble
-                                        v-for="(message, index) in messages.data"
+                                        v-for="(message, index) in localMessages"
                                         :key="message.id"
                                         :message="message"
-                                        :previousMessage="messages.data[index + 1] ?? null"
+                                        :previousMessage="localMessages[index + 1] ?? null"
                                     />
                                 </ScrollArea>
                                 <EmptyChat

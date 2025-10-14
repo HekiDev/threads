@@ -83,7 +83,6 @@ class ChatSeeder extends Seeder
                 foreach ([$creator, $secondMember] as $member) {
                     ChatMessageStatus::create([
                         'user_id' => $member->id,
-                        'chat_id' => $chat->id,
                         'chat_message_id' => $message->id,
                         'received_at' => now(),
                         'read_at' => rand(0, 1) ? now() : null,

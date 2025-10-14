@@ -17,7 +17,6 @@ return new class extends Migration
         Schema::create('chat_message_statuses', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
-            $table->foreignIdFor(Chat::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(ChatMessage::class)->constrained()->cascadeOnDelete();
             $table->timestamp('received_at')->nullable();
             $table->timestamp('read_at')->nullable();

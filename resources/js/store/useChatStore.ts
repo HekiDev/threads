@@ -33,8 +33,23 @@ export const useChatStore = defineStore('chatStore', () => {
         })
     }
 
+    const handleStoreChatMessage = async({ message, chat_id }: { message: string, chat_id: number }) => {
+        return await new Promise((resolve, reject) => {
+            axios.post(route('chat.store-message', chat_id), {
+                message: message,
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
     return {
         handleSearchUsers,
         handleStoreChat,
+        handleStoreChatMessage,
     }
 })

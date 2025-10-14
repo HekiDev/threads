@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Chat;
+use Illuminate\Support\Facades\DB;
 
 class ChatService
 {
@@ -33,7 +34,6 @@ class ChatService
 
             $statusArr[] = [
                 'user_id' => $member,
-                'chat_id' => $chat->id,
                 'chat_message_id' => $message->id,
                 'received_at' => $isMine ? $timestamp : null,
                 'read_at' => $isMine ? $timestamp : null,
@@ -42,8 +42,8 @@ class ChatService
             ];
         }
 
-        $chat->members()->insert($membersArr);
-        $message->statuses()->insert($statusArr);
+        DB::table('chat_members')->insert($membersArr);
+        DB::table('chat_message_statuses')->insert($statusArr);
 
         return $chat;
     }
@@ -64,7 +64,6 @@ class ChatService
 
             $data[] = [
                 'user_id' => $member,
-                'chat_id' => $chat->id,
                 'chat_message_id' => $message->id,
                 'received_at' => $isMine ? $timestamp : null,
                 'read_at' => $isMine ? $timestamp : null,
@@ -73,8 +72,27 @@ class ChatService
             ];
         }
 
-        $message->statuses()->insert($data);
+        DB::table('chat_message_statuses')->insert($data);
 
         return $chat;
+    }
+
+    public function storeMessage($auth, $chat, $message): void
+    {
+        $statusArr = [];
+        $timestamp = now();
+
+        foreach ($chat->members as $member) {
+            $isMine = $auth->id === $member->user_id;
+            $statusArr[] = [
+                'user_id' => $member->user_id,
+                'chat_message_id' => $message->id,
+                'received_at' => $isMine ? $timestamp : null,
+                'read_at' => $isMine ? $timestamp : null,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+        }
+        DB::table('chat_message_statuses')->insert($statusArr);
     }
 }

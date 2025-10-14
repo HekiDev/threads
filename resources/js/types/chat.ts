@@ -26,7 +26,7 @@ export interface SingleMessage {
     is_mine: boolean;
     created_at: string;
     message: string;
-    user: {
+    user?: {
         id: number;
         name: string;
         avatar: string | null;

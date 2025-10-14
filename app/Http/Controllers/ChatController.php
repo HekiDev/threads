@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatResource;
 use App\Http\Resources\SearchChatUserResource;
+use App\Http\Resources\SentMessageResource;
 use App\Models\Chat;
 use App\Models\ChatMember;
 use App\Models\ChatMessage;
@@ -70,13 +72,14 @@ class ChatController extends Controller
                     ->whereNotNull('read_at');
             }])
             ->where('chat_id', $chat->id)
-            ->oldest('id')
+            ->latest('id')
             ->paginate(20)
-            ->toResourceCollection();
+            ->getCollection()
+            ->reverse();
 
         return Inertia::render('Chat/Index', [
             'active_chat_id' => $chat->id,
-            'messages' => $messages,
+            'messages' => ChatMessageResource::collection($messages),
         ]);
         
     }
@@ -124,6 +127,28 @@ class ChatController extends Controller
         return response()->json([
             'chat' => new ChatResource($chat),
             'message' => 'Chat created successfully.',
+        ], 201);
+    }
+
+    public function storeChatMessage(Request $request, Chat $chat)
+    {
+        $request->validate([
+            'message' => 'required|string|max:500',
+        ]);
+        $auth = auth()->user();
+
+        $chat->load(['members:id,user_id,chat_id']);
+
+        $message = $chat->messages()->create([
+            'user_id' => $auth->id,
+            'message' => $request->message,
+        ]);
+
+        $this->chatService->storeMessage($auth, $chat, $message);
+
+        return response()->json([
+            'chat_id' => $chat->id,
+            'message' => new SentMessageResource($message),
         ], 201);
     }
 
