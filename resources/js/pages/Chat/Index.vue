@@ -1,20 +1,23 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, watchEffect } from 'vue';
+import { scrollToBottom, updateAndResortChats } from '@/lib/chats';
+import { toggleChatChannel } from '@/lib/listeners';
+import { eventMessageHandler } from '@/lib/listeners';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Search, ArrowLeft } from 'lucide-vue-next'
-import ChatBubble from '@/components/chat/ChatBubble.vue';
-import ChatInput from '@/components/chat/ChatInput.vue';
 import { type BreadcrumbItem } from '@/types';
 import { type ChatUser, type Chat, type SingleChat, type ChatMessage, SingleMessage } from '@/types/chat';
+import ChatBubble from '@/components/chat/ChatBubble.vue';
+import ChatInput from '@/components/chat/ChatInput.vue';
 import CreateChat from '@/components/chat/CreateChat.vue';
 import ChatHeader from '@/components/chat/ChatHeader.vue';
 import EmptyChat from '@/components/chat/EmptyChat.vue';
-import Avatar from '@/components/Avatar.vue';
+import ChatList from '@/components/chat/ChatList.vue';
 import { useChatStore } from '@/store/useChatStore';
 
 const { chats, messages, active_chat_id = null } = defineProps<{
@@ -41,8 +44,10 @@ const user = ref<ChatUser>({
     username: '@jacquenetta',
     avatar: 'https://bundui-images.netlify.app/avatars/01.png',
 })
+const scrollAreaRef = ref(null);
 const localChats = ref<SingleChat[]>([]);
 const localMessages = ref<SingleMessage[]>([]);
+const chatInputRef = ref<InstanceType<typeof ChatInput> | null>(null)
 
 const handleGetChatMessages = (chat: SingleChat) => {
     chat_id.value = chat.id
@@ -57,7 +62,11 @@ const handleGetChatMessages = (chat: SingleChat) => {
         preserveScroll: true,
         only: ['messages', 'active_chat_id'],
         onStart: () => isLoading.value = true,
-        onSuccess: () => isLoading.value = false,
+        onSuccess: () => {
+            isLoading.value = false;
+            scrollToBottom(scrollAreaRef)
+            chatInputRef.value?.focusChatInput()
+        },
     })
 }
 
@@ -84,7 +93,10 @@ const handleSendMessage = () => {
             }, 250)
         })
         .catch(error => {})
-        .finally(() => isLoading.value = false)
+        .finally(() => {
+            isLoading.value = false
+            chatInputRef.value?.focusChatInput()
+        })
     } else {
         chatStore.handleStoreChatMessage({
             message: message.value,
@@ -93,14 +105,51 @@ const handleSendMessage = () => {
         .then((data: any) => {
             message.value = ''
             localMessages.value.push(data.message)
+            localChats.value = updateAndResortChats(localChats.value, data)
         })
         .catch(error => {})
-        .finally(() => isLoading.value = false)
+        .finally(() => {
+            isLoading.value = false
+            chatInputRef.value?.focusChatInput()
+        })
     }
 }
 
 watch(() => messages, (value: any) => {
+    if (! messages) return
     localMessages.value = value.data;
+})
+
+watchEffect(() => {
+    localChats.value = chats.data
+})
+
+watch(() => localMessages.value.length, () => {
+    scrollToBottom(scrollAreaRef)
+})
+
+watch(() => chat_id.value, (newValue, oldValue) => {
+    if (newValue === oldValue) return
+    if (newValue && ! oldValue) {
+        toggleChatChannel(newValue, 'enter')
+    } else {
+        toggleChatChannel(oldValue, 'leave')
+        toggleChatChannel(newValue, 'enter')
+    }
+})
+
+watch(eventMessageHandler, (newMessage) => {
+    localMessages.value.push({
+        ...newMessage.message,
+        is_mine: false,
+    })
+    localChats.value = updateAndResortChats(localChats.value, {
+        ...newMessage,
+        message: {
+            ...newMessage.message,
+            is_mine: false,
+        }
+    })
 })
 </script>
 
@@ -142,28 +191,13 @@ watch(() => messages, (value: any) => {
                                     </div>
                                 </div>
                             </div>
-                            <ScrollArea class="w-full h-full overflow-auto" v-if="chats && chats.data.length">
-                                <div class="flex items-center gap-3 px-4 py-3 break-all select-none not-first:border-t not-last:border-b-0 hover:bg-accent cursor-pointer"
-                                    v-for="chat in chats.data"
+                            <ScrollArea class="w-full h-full overflow-auto" v-if="chats && localChats.length">
+                                <ChatList v-for="chat in localChats"
                                     :key="chat.id"
-                                    @click="handleGetChatMessages(chat)"
-                                    :class="{'bg-accent': chat.id === chat_id}"
-                                >
-                                    <Avatar className="size-9"
-                                        v-for="member in chat.members"
-                                        :key="member.id"
-                                        :user="member"
-                                    />
-                                    <div class="truncate text-ellipsis break-all w-full">
-                                        <div class="flex items-center justify-between">
-                                            <p class="text-sm font-medium truncate text-ellipsis">{{ chat.members[0].name }}</p>
-                                            <p class="text-xs text-muted-foreground">{{ chat.last_message.datetime }}</p>
-                                        </div>
-                                        <p class="text-sm text-muted-foreground truncate text-ellipsis break-all">
-                                            <span class="font-medium" v-if="chat.last_message.is_mine">You:</span> {{ chat.last_message.message }}
-                                        </p>
-                                    </div>
-                                </div>
+                                    :chat="chat"
+                                    :isActive="chat.id === chat_id"
+                                    @whenClick="handleGetChatMessages(chat)"
+                                />
                             </ScrollArea>
                             <div class="text-center text-muted-foreground text-sm h-full p-5" v-else>No chats available.</div>
                         </section>
@@ -185,12 +219,13 @@ watch(() => messages, (value: any) => {
                                         :user="user"
                                     />
                                 </div>
-                                <ScrollArea class="flex flex-1 overflow-auto" v-if="!isNewChat && localMessages.length">
+                                <ScrollArea class="flex flex-1 overflow-auto" ref="scrollAreaRef" v-if="!isNewChat && localMessages.length">
                                     <ChatBubble
                                         v-for="(message, index) in localMessages"
                                         :key="message.id"
                                         :message="message"
                                         :previousMessage="localMessages[index + 1] ?? null"
+                                        :nextMessage="localMessages[index - 1] ?? null"
                                     />
                                 </ScrollArea>
                                 <EmptyChat
@@ -198,7 +233,12 @@ watch(() => messages, (value: any) => {
                                     :title="`Chat with ${user.name }`"
                                     description="Start a conversation with this user."
                                 />
-                                <ChatInput v-model:message="message" :disabled="isLoading" @sendMessage="handleSendMessage()"/>
+                                <ChatInput 
+                                    ref="chatInputRef"
+                                    v-model:message="message"
+                                    :disabled="isLoading"
+                                    @sendMessage="handleSendMessage()"
+                                />
                             </div>
                             <EmptyChat
                                 v-else

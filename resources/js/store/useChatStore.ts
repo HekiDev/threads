@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { echo } from '@laravel/echo-vue'
 
 export const useChatStore = defineStore('chatStore', () => {
     const handleSearchUsers = async(query: string) => {
@@ -37,6 +38,10 @@ export const useChatStore = defineStore('chatStore', () => {
         return await new Promise((resolve, reject) => {
             axios.post(route('chat.store-message', chat_id), {
                 message: message,
+            }, {
+                headers: {
+                    'X-Socket-Id': echo().connector.socketId(),
+                },
             })
             .then(response => {
                 resolve(response.data);

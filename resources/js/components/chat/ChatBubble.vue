@@ -2,13 +2,15 @@
 import { CheckCheck } from 'lucide-vue-next'
 import Avatar from '../Avatar.vue';
 import { type SingleMessage } from '@/types/chat';
+import { shouldShowDateDivider, formatMessageDate } from '@/lib/chats';
 
 interface ChatBubbleProps {
     message: SingleMessage
     previousMessage?: SingleMessage | null;
+    nextMessage?: SingleMessage | null;
 }
 
-const { message, previousMessage } = defineProps<ChatBubbleProps>();
+const { message, previousMessage, nextMessage } = defineProps<ChatBubbleProps>();
 
 const sentInSameMinute = () => {
     if (!previousMessage) return true;
@@ -25,6 +27,13 @@ const sentInSameMinute = () => {
 </script>
 
 <template>
+    <!-- Date Divider -->
+    <div
+        v-if="shouldShowDateDivider(message, nextMessage)"
+        class="text-center text-xs text-muted-foreground my-2 select-none"
+    >
+        {{ formatMessageDate(message.created_at) }}
+    </div>
     <div
         class="flex py-1"
         :class="message.is_mine ? 'justify-end' : 'justify-start'"

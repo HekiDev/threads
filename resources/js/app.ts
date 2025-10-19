@@ -7,7 +7,12 @@ import { createApp, h } from 'vue';
 import { createPinia } from 'pinia'
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import { configureEcho } from '@laravel/echo-vue';
 import 'vue-sonner/style.css'
+
+configureEcho({
+    broadcaster: "reverb",
+});
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 const pinia = createPinia();

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ChatMessageEvent;
 use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatResource;
 use App\Http\Resources\SearchChatUserResource;
@@ -144,11 +145,15 @@ class ChatController extends Controller
             'message' => $request->message,
         ]);
 
+        $newMessage = new SentMessageResource($message->load('user:id,name,avatar'));
+
+        broadcast(new ChatMessageEvent($chat->id, $newMessage))->toOthers();
+
         $this->chatService->storeMessage($auth, $chat, $message);
 
         return response()->json([
             'chat_id' => $chat->id,
-            'message' => new SentMessageResource($message),
+            'message' => $newMessage,
         ], 201);
     }
 
