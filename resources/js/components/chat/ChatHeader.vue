@@ -16,7 +16,12 @@ const { chat_id = null, user } = defineProps<{
             <Avatar :user="user" />
             <div class="">
                 <p class="font-medium">{{ user.name }}</p>
-                <p class="text-xs text-muted-foreground">{{ user?.status ? user.status : '-' }}</p>
+                <p class="text-xs capitalize"
+                    :class="{
+                        'text-green-500': user.status === 'online',
+                        'text-muted-foreground': user.status === 'offline',
+                    }"
+                >{{ user?.status ? user.status : '-' }}</p>
             </div>
         </div>
         <Button variant="outline" v-if="chat_id">

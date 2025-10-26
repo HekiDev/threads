@@ -26,6 +26,7 @@ export function updateAndResortChats(chatsArr: SingleChat[], newMessage: any): S
                 message: newMessage.message.message,
                 datetime: newMessage.message.datetime,
                 is_mine: newMessage.message.is_mine,
+                status: newMessage.message.status,
             }
         }
         return newList
@@ -39,6 +40,7 @@ export function updateAndResortChats(chatsArr: SingleChat[], newMessage: any): S
             message: newMessage.message.message,
             datetime: newMessage.message.datetime,
             is_mine: newMessage.message.is_mine,
+            status: newMessage.message.status,
         },
     }
 

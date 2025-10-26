@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import { ref, watch, watchEffect } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 import { scrollToBottom, updateAndResortChats } from '@/lib/chats';
-import { toggleChatChannel } from '@/lib/listeners';
-import { eventMessageHandler } from '@/lib/listeners';
+import {
+    joinedUser,
+    leavedUser,
+    channelUsersHandler,
+    eventMessageHandler,
+    toggleChatChannel,
+    toggleChatPageChannel
+} from '@/lib/listeners';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -32,6 +38,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
         href: '/chats',
     },
 ];
+const user_id = ref(usePage().props.auth.user.id ?? 0);
 const message = ref<string>('');
 const isLoading = ref<boolean>(false);
 const newChatDialog = ref<boolean>(false);
@@ -43,11 +50,13 @@ const user = ref<ChatUser>({
     name: 'Jacquenetta Slowgrave',
     username: '@jacquenetta',
     avatar: 'https://bundui-images.netlify.app/avatars/01.png',
+    status: '',
 })
 const scrollAreaRef = ref(null);
 const localChats = ref<SingleChat[]>([]);
 const localMessages = ref<SingleMessage[]>([]);
 const chatInputRef = ref<InstanceType<typeof ChatInput> | null>(null)
+const activeRecipients = ref<any[]>([]);
 
 const handleGetChatMessages = (chat: SingleChat) => {
     chat_id.value = chat.id
@@ -106,6 +115,7 @@ const handleSendMessage = () => {
             message.value = ''
             localMessages.value.push(data.message)
             localChats.value = updateAndResortChats(localChats.value, data)
+            updateMessageStatus()
         })
         .catch(error => {})
         .finally(() => {
@@ -114,6 +124,43 @@ const handleSendMessage = () => {
         })
     }
 }
+
+const updateMessageStatus = () => {
+    const isActiveRecipient = channelUsersHandler().find((u) => u.id === user.value.id);
+    if (! isActiveRecipient) return;
+
+    const idsToMark = localMessages.value
+        .filter(m => m.status === 'sent' && m.is_mine === true)
+        .map(m => m.id);
+
+    idsToMark.forEach(id => {
+        const msg = localMessages.value.find(m => m.id === id)
+        setTimeout(() => {
+            if (msg) {
+                msg.status = 'read';
+            }
+        }, 500)
+    })
+}
+
+watch(() => joinedUser.value, (value) => {
+    if (! value) return
+    activeRecipients.value.push(value)
+
+    if (value.id === user.value.id) {
+        user.value.status = 'online';
+        updateMessageStatus()
+    }
+})
+
+watch(() => leavedUser.value, (value) => {
+    if (! value) return
+    activeRecipients.value = activeRecipients.value.filter(u => u.id !== value.id)
+
+    if (value.id === user.value.id) {
+        user.value.status = 'offline';
+    }
+})
 
 watch(() => messages, (value: any) => {
     if (! messages) return
@@ -138,11 +185,17 @@ watch(() => chat_id.value, (newValue, oldValue) => {
     }
 })
 
-watch(eventMessageHandler, (newMessage) => {
-    localMessages.value.push({
-        ...newMessage.message,
-        is_mine: false,
-    })
+watch(() => eventMessageHandler()?.message.id, (value) => {
+    const newMessage = eventMessageHandler();
+    if (! newMessage) return
+
+    if (chat_id.value === newMessage.chat_id) {
+        localMessages.value.push({
+            ...newMessage.message,
+            is_mine: false,
+        })
+    }
+
     localChats.value = updateAndResortChats(localChats.value, {
         ...newMessage,
         message: {
@@ -150,6 +203,17 @@ watch(eventMessageHandler, (newMessage) => {
             is_mine: false,
         }
     })
+})
+
+onMounted(() => {
+    if (chat_id.value) return
+    toggleChatPageChannel(user_id.value, 'enter')
+})
+
+onBeforeUnmount(() => {
+    if (chat_id.value) {
+        toggleChatChannel(chat_id.value, 'leave')
+    }
 })
 </script>
 

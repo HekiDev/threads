@@ -18,6 +18,7 @@ class ChatMessageEvent implements ShouldBroadcast
      * Create a new event instance.
      */
     public function __construct(
+        private $recipient_id,
         private $chat_id,
         private $message
     ) {
@@ -32,7 +33,9 @@ class ChatMessageEvent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('chat-messages.'.$this->chat_id),
+            // new PrivateChannel('chat-messages.'.$this->chat_id),
+            new PresenceChannel('chat-messages.'.$this->chat_id),
+            new PrivateChannel('chats.'.$this->recipient_id),
         ];
     }
 

@@ -1,31 +1,79 @@
-import { useEcho, useEchoPresence } from '@laravel/echo-vue';
+import { echo, useEcho, useEchoPresence } from '@laravel/echo-vue';
 import { ref } from 'vue';
 
-const eventMessage = ref<any>(null);
+interface Message {
+    chat_id: number;
+    message: {
+        id: number;
+        message: string;
+        datetime: string;
+        created_at: string;
+        is_mine: boolean;
+        status: string;
+        user: {
+            id: number;
+            name: string;
+            avatar: string | null;
+        }
+    };
+}
 
-export function toggleChatPresence(chat_id: number | null, type: 'enter' | 'leave') {
-    return
-    if (! chat_id) return
+interface User {
+    id: number;
+}
 
-    const { listen, leave, leaveChannel, stopListening } = useEchoPresence(
-        `chat.${chat_id ?? 0}`, '.chat-page',
-        (e: any) => {
-            console.log(e);
-    });
+const channelUsers = ref<User[]>([]);
+const eventMessage = ref<Message|null>(null);
+export const hereUsers = ref<User[]>([]);
+export const joinedUser = ref<User|null>(null);
+export const leavedUser = ref<User|null>(null);
+
+export function toggleChatChannel(chat_id: number | null, type: 'enter' | 'leave') {
+    const presenceChannel = useEchoPresence<Message>(
+        `chat-messages.${chat_id}`,
+        '.chat-messages-event',
+        (e: Message) => {
+            eventMessage.value = e;
+        }
+    )
+
+    echo()
+    .join(`chat-messages.${chat_id}`)
+    .here((users: User[]) => {
+        channelUsers.value = users;
+        hereUsers.value = users;
+    })
+    .joining((user: User) => {
+        channelUsers.value.push(user);
+        joinedUser.value = user;
+    })
+    .leaving((user: User) => {
+        leavedUser.value = user;
+        channelUsers.value = channelUsers.value.filter((u) => u.id !== user.id);
+    })
 
     if (type === 'enter') {
-        listen();
+        presenceChannel.listen()
     } else {
-        leave();
-        leaveChannel();
-        stopListening();
+        presenceChannel.leave()
+        presenceChannel.leaveChannel()
+        presenceChannel.stopListening()
     }
 }
 
-export function toggleChatChannel(chat_id: number | null, type: 'enter' | 'leave') {
-    const { listen, leave, leaveChannel, stopListening } = useEcho(`chat-messages.${chat_id ?? 0}`, '.chat-messages-event', (e: any) => {
-        eventMessage.value = e;
-    });
+export function toggleChatPageChannel(recipient_id: number, type: 'enter' | 'leave') {
+    const {
+        listen,
+        leave,
+        leaveChannel,
+        stopListening
+    } = useEcho<Message>(
+        `chats.${recipient_id}`,
+        '.chat-messages-event',
+        (e: Message) => {
+            eventMessage.value = e;
+        }
+    );
 
     if (type === 'enter') {
         listen()
@@ -38,4 +86,8 @@ export function toggleChatChannel(chat_id: number | null, type: 'enter' | 'leave
 
 export function eventMessageHandler() {
     return eventMessage.value;
+}
+
+export function channelUsersHandler() {
+    return channelUsers.value;
 }

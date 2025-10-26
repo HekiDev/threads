@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { SingleChat } from '@/types/chat';
 import Avatar from '../Avatar.vue';
+import { ref } from 'vue';
 
 const { chat, isActive } = defineProps<{
     chat: SingleChat
@@ -10,11 +11,18 @@ const { chat, isActive } = defineProps<{
 const emits = defineEmits<{
     (e: 'whenClick', chat: SingleChat): void
 }>();
+
+const isClicked = ref<boolean>(false);
+
+const emitWhenClick = () => {
+    isClicked.value = true;
+    emits('whenClick', chat)
+}
 </script>
 
 <template>
     <div class="flex items-center gap-3 px-4 py-3 break-all select-none not-first:border-t not-last:border-b-0 hover:bg-accent cursor-pointer"
-        @click="emits('whenClick', chat)"
+        @click="emitWhenClick()"
         :class="{'bg-accent': isActive}"
     >
         <Avatar className="size-9"
@@ -27,7 +35,11 @@ const emits = defineEmits<{
                 <p class="text-sm font-medium truncate text-ellipsis">{{ chat.members[0].name }}</p>
                 <p class="text-xs text-muted-foreground">{{ chat.last_message.datetime }}</p>
             </div>
-            <p class="text-sm text-muted-foreground truncate text-ellipsis break-all">
+            <p class="text-sm truncate text-ellipsis break-all"
+                :class="{
+                    'text-muted-foreground' : isClicked || (chat.last_message.is_mine || chat.last_message.status === 'read'),
+                }"
+            >
                 <span class="font-medium" v-if="chat.last_message.is_mine">You:</span> {{ chat.last_message.message }}
             </p>
         </div>

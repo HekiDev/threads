@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\ChatService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 
 class ChatController extends Controller
@@ -34,10 +35,15 @@ class ChatController extends Controller
                     $query->with('user:id,name,avatar');
                 },
                 'lastMessage' => function ($query) use ($auth) {
-                    $query->select([
-                        'chat_messages.*',
-                        DB::raw("CASE WHEN user_id = {$auth->id} THEN TRUE ELSE FALSE END as is_mine"),
-                    ]);
+                    $query->select('chat_messages.*')
+                        ->addSelect(DB::raw("CASE WHEN user_id = {$auth->id} THEN TRUE ELSE FALSE END as is_mine"))
+                        ->withCount([
+                            'statuses as is_readed' => function ($sub) use ($auth) {
+                                $sub->where('user_id', $auth->id)
+                                    ->whereNotNull('received_at')
+                                    ->whereNotNull('read_at');
+                            },
+                        ]);
                 },
                 'lastMessage.user:id,name',
             ])
@@ -59,6 +65,8 @@ class ChatController extends Controller
     public function getChatMessages(Chat $chat)
     {
         $auth = auth()->user();
+
+        $this->chatService->updateUnreadMessages($auth, $chat);
 
         $messages = ChatMessage::query()
             ->select([
@@ -147,9 +155,12 @@ class ChatController extends Controller
 
         $newMessage = new SentMessageResource($message->load('user:id,name,avatar'));
 
-        broadcast(new ChatMessageEvent($chat->id, $newMessage))->toOthers();
+        $recipient = collect($chat->members)->firstWhere('user_id', '!=', $auth->id);
+        broadcast(new ChatMessageEvent($recipient->user_id, $chat->id, $newMessage))->toOthers();
 
-        $this->chatService->storeMessage($auth, $chat, $message);
+        $recipients = $this->chatService->getSubsribedUsers($chat->id);
+
+        $this->chatService->storeMessageStatus($auth, $chat, $message, $recipients);
 
         return response()->json([
             'chat_id' => $chat->id,
