@@ -24,6 +24,10 @@ export const useChatStore = defineStore('chatStore', () => {
             axios.post(route('chat.store'), {
                 user_id: user_id,
                 message: message,
+            }, {
+                headers: {
+                    'X-Socket-Id': echo().connector.socketId(),
+                },
             })
             .then(response => {
                 resolve(response.data);

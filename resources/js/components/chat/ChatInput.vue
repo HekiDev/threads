@@ -10,6 +10,7 @@ const { disabled = false } = defineProps<{
 const model = defineModel<string>('message');
 const emits = defineEmits<{
     (e: 'sendMessage'): void
+    (e: 'sendTypingWhiper'): void
 }>();
 
 const textareaRef = ref<HTMLTextAreaElement  | null>(null)
@@ -35,6 +36,7 @@ defineExpose({ focusChatInput })
             class="flex-1 min-h-1 pb-12 resize-none overflow-hidden focus-visible:ring-0 focus-visible:border-input break-all"
             @keydown.enter.exact.prevent="emits('sendMessage')"
             @keydown.shift.enter.stop
+            @keydown="emits('sendTypingWhiper')"
         />
         <div class="absolute bottom-2 w-full flex justify-between px-2">
             <div class="">

@@ -54,10 +54,28 @@ export function toggleChatChannel(chat_id: number | null, type: 'enter' | 'leave
 
     if (type === 'enter') {
         presenceChannel.listen()
+
+        return {
+            whisper: (name: string, payload: Record<string, any>) => {
+                const activeChannel = presenceChannel.channel();
+                if (activeChannel) {
+                    activeChannel.whisper(name, payload);
+                }
+            },
+            listenForWhisper: (name: string, callback: (payload: any) => void) => {
+                const activeChannel = presenceChannel.channel();
+                if (activeChannel) {
+                    activeChannel.listenForWhisper(name, (e: any) => {
+                        callback(e);
+                    });
+                }
+            },
+        };
     } else {
         presenceChannel.leave()
         presenceChannel.leaveChannel()
         presenceChannel.stopListening()
+        return null
     }
 }
 

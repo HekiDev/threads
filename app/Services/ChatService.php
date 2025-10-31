@@ -48,7 +48,7 @@ class ChatService
         DB::table('chat_members')->insert($membersArr);
         DB::table('chat_message_statuses')->insert($statusArr);
 
-        return $chat;
+        return [$chat, $message];
     }
 
     public function existing($auth, $existingChat, $members, $request)

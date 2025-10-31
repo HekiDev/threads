@@ -14,6 +14,32 @@ export function scrollToBottom(scrollAreaRef: any) {
 
 export function updateAndResortChats(chatsArr: SingleChat[], newMessage: any): SingleChat[] {
     const index = chatsArr.findIndex(c => c.id === newMessage.chat_id)
+
+    if (chatsArr.length === 0) {
+        return [{
+            id: newMessage.chat_id,
+            last_message: {
+                created_at: newMessage.message.created_at,
+                datetime: newMessage.message.datetime,
+                is_mine: newMessage.message.is_mine,
+                message: newMessage.message.message,
+                id: newMessage.message.id,
+                status: newMessage.message.status,
+                user: {
+                    id: newMessage.message.user.id,
+                    name: newMessage.message.user.name,
+                },
+            },
+            members: [
+                {
+                    avatar: newMessage.message.user.avatar,
+                    id: newMessage.message.user.id,
+                    name: newMessage.message.user.name,
+                    username: newMessage.message.user.username},
+            ],
+        }]
+    }
+
     if (index === -1) return chatsArr
 
     if (index === 0) {

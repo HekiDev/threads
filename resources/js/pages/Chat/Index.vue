@@ -57,6 +57,10 @@ const localChats = ref<SingleChat[]>([]);
 const localMessages = ref<SingleMessage[]>([]);
 const chatInputRef = ref<InstanceType<typeof ChatInput> | null>(null)
 const activeRecipients = ref<any[]>([]);
+const chatChannel = ref<any>(null);
+const isTyping = ref<boolean>(false);
+const typingTimeout = ref<number|null>(null);
+const typingUserId = ref<number|null>(null);
 
 const handleGetChatMessages = (chat: SingleChat) => {
     chat_id.value = chat.id
@@ -143,6 +147,25 @@ const updateMessageStatus = () => {
     })
 }
 
+const sendTypingWhisperEvent = () => {
+    chatChannel.value?.whisper('typing', {
+        sender_id: user_id.value,
+    })
+}
+
+const listenTypingWhisperEvent = () => {
+    chatChannel.value?.listenForWhisper('typing', (e: any) => {
+        isTyping.value = true;
+        typingUserId.value = e.sender_id
+
+        if (typingTimeout.value) clearTimeout(typingTimeout.value)
+
+        typingTimeout.value = setTimeout(() => {
+            isTyping.value = false;
+        }, 1000)
+    })
+}
+
 watch(() => joinedUser.value, (value) => {
     if (! value) return
     activeRecipients.value.push(value)
@@ -178,10 +201,12 @@ watch(() => localMessages.value.length, () => {
 watch(() => chat_id.value, (newValue, oldValue) => {
     if (newValue === oldValue) return
     if (newValue && ! oldValue) {
-        toggleChatChannel(newValue, 'enter')
+        chatChannel.value = toggleChatChannel(newValue, 'enter')
+        listenTypingWhisperEvent()
     } else {
         toggleChatChannel(oldValue, 'leave')
-        toggleChatChannel(newValue, 'enter')
+        chatChannel.value = toggleChatChannel(newValue, 'enter')
+        listenTypingWhisperEvent()
     }
 })
 
@@ -214,6 +239,7 @@ onBeforeUnmount(() => {
     if (chat_id.value) {
         toggleChatChannel(chat_id.value, 'leave')
     }
+    if (typingTimeout.value) clearTimeout(typingTimeout.value)
 })
 </script>
 
@@ -281,6 +307,8 @@ onBeforeUnmount(() => {
                                     <ChatHeader
                                         :chat_id="chat_id"
                                         :user="user"
+                                        :isTyping="isTyping"
+                                        :typingUserId="typingUserId"
                                     />
                                 </div>
                                 <ScrollArea class="flex flex-1 overflow-auto" ref="scrollAreaRef" v-if="!isNewChat && localMessages.length">
@@ -302,6 +330,7 @@ onBeforeUnmount(() => {
                                     v-model:message="message"
                                     :disabled="isLoading"
                                     @sendMessage="handleSendMessage()"
+                                    @sendTypingWhiper="sendTypingWhisperEvent()"
                                 />
                             </div>
                             <EmptyChat

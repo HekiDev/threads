@@ -125,13 +125,17 @@ class ChatController extends Controller
             ], 201);
         }
 
-        $chat = $this->chatService->new($auth, $members, $request);
+        [$chat, $message] = $this->chatService->new($auth, $members, $request);
         $chat->load([
             'members' => function ($query) use ($auth) {
                 $query->where('user_id', '!=', $auth->id);
                 $query->with('user:id,name,avatar');
             },
         ]);
+
+        $newMessage = new SentMessageResource($message->load('user:id,name,avatar'));
+        $recipient = collect($chat->members)->firstWhere('user_id', '!=', $auth->id);
+        broadcast(new ChatMessageEvent($recipient->user_id, $chat->id, $newMessage))->toOthers();
 
         return response()->json([
             'chat' => new ChatResource($chat),
