@@ -82,15 +82,39 @@ class ChatController extends Controller
             }])
             ->where('chat_id', $chat->id)
             ->latest('id')
-            ->paginate(20)
-            ->getCollection()
-            ->reverse();
+            ->paginate(20);
+
+        $messages->setCollection($messages->getCollection()->reverse());
 
         return Inertia::render('Chat/Index', [
             'active_chat_id' => $chat->id,
             'messages' => ChatMessageResource::collection($messages),
         ]);
-        
+    }
+
+    public function getOlderMessages($chat_id)
+    {
+        $auth = auth()->user();
+
+        $messages = ChatMessage::query()
+            ->select([
+                'chat_messages.*',
+                DB::raw("CASE WHEN user_id = {$auth->id} THEN TRUE ELSE FALSE END as is_mine"),
+            ])
+            ->with([
+                'user:id,name,avatar',
+            ])
+            ->withCount(['statuses as is_readed' => function ($query) use ($auth) {
+                $query->where('user_id', '!=', $auth->id)
+                    ->whereNotNull('read_at');
+            }])
+            ->where('chat_id', $chat_id)
+            ->latest('id')
+            ->paginate(20);
+
+        $messages->setCollection($messages->getCollection()->reverse());
+
+        return ChatMessageResource::collection($messages);
     }
 
     public function storeChat(Request $request)

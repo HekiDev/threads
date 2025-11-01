@@ -56,9 +56,26 @@ export const useChatStore = defineStore('chatStore', () => {
         })
     }
 
+    const handleLoadOlderMessages = async({ page, chat_id }: { page: number, chat_id: number }) => {
+        return await new Promise((resolve, reject) => {
+            axios.get(route('chat.older-messages', chat_id), {
+                params: {
+                    page: page,
+                },
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
     return {
         handleSearchUsers,
         handleStoreChat,
         handleStoreChatMessage,
+        handleLoadOlderMessages,
     }
 })

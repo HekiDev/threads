@@ -136,6 +136,9 @@ const emitSendCommentSubReply = () => {
 
 const determineSendAction = () => {
     emits('toggleComment', { index: index })
+
+    if (! comment.value) return
+
     if (isReplyComment.value) {
         emitSendCommentSubReply()
     } else {
@@ -303,6 +306,8 @@ onUpdated(() => {
                                 name="reply"
                                 :placeholder="`Reply to ${textareaUsername}`"
                                 class="flex-1 min-h-1 pb-12 resize-none overflow-hidden focus-visible:ring-0 focus-visible:border-input break-all"
+                                @keydown.enter.exact.prevent="determineSendAction()"
+                                @keydown.shift.enter.stop
                             />
                             <div class="absolute bottom-2 w-full flex justify-between px-2">
                                 <div class="">

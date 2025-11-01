@@ -34,6 +34,7 @@ class ThreadResource extends JsonResource
             'comments_count' => $this->comments_count,
             'reactions_count' => $this->reactions_count,
             'reacted' => $this->reacted,
+            'views_count' => $this->views_count ?? 0,
         ];
     }
 }

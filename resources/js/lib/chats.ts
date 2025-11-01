@@ -1,14 +1,32 @@
 import { SingleChat } from "@/types/chat"
 import { nextTick } from "vue"
 
-export function scrollToBottom(scrollAreaRef: any) {
+export function scrollToBottom(scrollAreaRef: any, slightly: boolean = false, offset: number = 0) {
     const el = (scrollAreaRef.value as any)?.$el || scrollAreaRef.value
     const scrollEl = el?.querySelector('[data-reka-scroll-area-viewport]') || el
 
     if (! scrollEl) return
 
+    if (slightly) {
+        const distanceFromBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight
+
+        nextTick(() => {
+            const newScrollTop =
+                scrollEl.scrollHeight - scrollEl.clientHeight - distanceFromBottom + offset
+
+            scrollEl.scrollTo({
+                top: newScrollTop,
+                behavior: 'smooth',
+            })
+        })
+        return;
+    }
+
     nextTick(() => {
-        scrollEl.scrollTop = scrollEl.scrollHeight
+        scrollEl.scrollTo({
+            top: scrollEl.scrollHeight,
+            behavior: 'smooth',
+        })
     })
 }
 
@@ -35,7 +53,8 @@ export function updateAndResortChats(chatsArr: SingleChat[], newMessage: any): S
                     avatar: newMessage.message.user.avatar,
                     id: newMessage.message.user.id,
                     name: newMessage.message.user.name,
-                    username: newMessage.message.user.username},
+                    username: newMessage.message.user.username
+                },
             ],
         }]
     }

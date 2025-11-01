@@ -55,6 +55,8 @@ class HomeController extends Controller
 
         $thread = $this->threadService->getThread($uuid, $user);
 
+        $this->threadService->addThreadView($user->id, $thread->user_id, $thread->id);
+
         $comments = $this->threadService->getComments($thread, $sorting, $commentLimit, $subReplyLimit, $user);
 
         return Inertia::render('Thread/Show', [

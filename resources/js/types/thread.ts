@@ -20,6 +20,7 @@ export interface Thread extends ThreadComment{
     comments_count: number;
     reactions_count: number;
     reacted: boolean;
+    views_count?: number;
 }
 
 export interface ThreadComment {

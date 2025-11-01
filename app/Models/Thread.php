@@ -51,4 +51,9 @@ class Thread extends Model
 
         return $relation->create($attributes); // created
     }
+
+    public function views(): HasMany
+    {
+        return $this->hasMany(ThreadView::class);
+    }
 }

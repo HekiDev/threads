@@ -22,8 +22,8 @@ class ThreadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'topic' => 'sometimes',
-            'description' => 'required',
+            'topic' => 'nullable|string|max:50',
+            'description' => 'required|string|max:500',
             'attachments' => 'sometimes|array|max:5',
             'attachments.*' => 'file|max:1024|mimes:jpeg,png,jpg',
         ];
@@ -53,6 +53,13 @@ class ThreadRequest extends FormRequest
                     'attachments',
                     'The total size of all files must not exceed 5MB.'
                 );
+            }
+
+            if ($validator->errors()->has('topic')) {
+                $topicErrors = $validator->errors()->get('topic');
+                foreach ($topicErrors as $error) {
+                    $validator->errors()->add('description', $error);
+                }
             }
         });
     }

@@ -169,7 +169,7 @@ const handleCommentSorting = () => {
         <div class="px-4 py-6">
             <HomeLayout>
                 <template v-slot:header>
-                    <Heading title="Thread" description="24.2k views" />
+                    <Heading title="Thread" :description="`${post.data.views_count} views`" />
                 </template>
                 <template v-slot:content>
                     <Post

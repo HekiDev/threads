@@ -9,6 +9,7 @@ use App\Models\CommentReaction;
 use App\Models\Thread;
 use App\Models\ThreadComment;
 use App\Models\ThreadCommentReply;
+use App\Models\ThreadView;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Number;
@@ -88,6 +89,7 @@ class ThreadService
         return Thread::query()
             ->withCount('comments')
             ->withCount('reactions')
+            ->withCount('views')
             ->withExists(['reactions as reacted' => function ($query) use ($user) {
                 $query->where([
                     'userable_id' => $user->id,
@@ -108,10 +110,7 @@ class ThreadService
             ])
             ->where('uuid', $uuid)
             ->firstOrFail()
-            ->toResource()
-            ->additional([
-                'views_count' => 0,
-            ]);
+            ->toResource();
     }
 
     public function getComments($thread, $sorting, $commentLimit, $subReplyLimit, $user)
@@ -195,5 +194,12 @@ class ThreadService
             ->latest()
             ->paginate($limit)
             ->toResourceCollection();
+    }
+
+    public function addThreadView($auth_id, $thread_user_id, $thread_id): void
+    {
+        if ($auth_id === $thread_user_id) return;
+
+        ThreadView::firstOrCreate(['user_id' => $thread_user_id, 'thread_id' => $thread_id]);
     }
 }

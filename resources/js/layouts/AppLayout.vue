@@ -142,7 +142,11 @@ watch(() => threadStore.dialog, (value) => {
                             <p class="font-semibold">{{ user.name }}</p>
                             <ChevronRight class="size-4 text-muted-foreground" />
                             <Select v-model="thread.topic">
-                                <SelectTrigger>
+                                <SelectTrigger
+                                    :class="[
+                                        errors.topic && 'border-destructive focus-visible:ring-destructive/40 ring-destructive/20 dark:ring-destructive/40 focus-visible:border-destructive',
+                                    ]"
+                                >
                                     <SelectValue placeholder="Select a topic" class="max-w-[150px]" />
                                 </SelectTrigger>
                                 <SelectContent class="max-w-sm">

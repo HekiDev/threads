@@ -15,7 +15,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Search, ArrowLeft } from 'lucide-vue-next'
+import { Plus, Search, ArrowLeft, LoaderCircle } from 'lucide-vue-next'
 import { type BreadcrumbItem } from '@/types';
 import { type ChatUser, type Chat, type SingleChat, type ChatMessage, SingleMessage } from '@/types/chat';
 import ChatBubble from '@/components/chat/ChatBubble.vue';
@@ -25,6 +25,8 @@ import ChatHeader from '@/components/chat/ChatHeader.vue';
 import EmptyChat from '@/components/chat/EmptyChat.vue';
 import ChatList from '@/components/chat/ChatList.vue';
 import { useChatStore } from '@/store/useChatStore';
+import WhenVisible from '@/components/WhenVisible.vue';
+import { debounce } from '@/lib/debounce';
 
 const { chats, messages, active_chat_id = null } = defineProps<{
     chats: Chat;
@@ -47,9 +49,9 @@ const hasSelectedChat = ref<boolean>(false);
 const chat_id = ref<number|null>(active_chat_id);
 const user = ref<ChatUser>({
     id: 0,
-    name: 'Jacquenetta Slowgrave',
-    username: '@jacquenetta',
-    avatar: 'https://bundui-images.netlify.app/avatars/01.png',
+    name: '',
+    username: '',
+    avatar: '',
     status: '',
 })
 const scrollAreaRef = ref(null);
@@ -61,12 +63,15 @@ const chatChannel = ref<any>(null);
 const isTyping = ref<boolean>(false);
 const typingTimeout = ref<number|null>(null);
 const typingUserId = ref<number|null>(null);
+const ignoreWatcher = ref<boolean>(false);
+const messagesPage = ref<number>(1);
 
 const handleGetChatMessages = (chat: SingleChat) => {
     chat_id.value = chat.id
     user.value = chat.members[0]
     isNewChat.value = false
     hasSelectedChat.value = true
+    messagesPage.value = 1
 
     router.get(route('chat.messages', chat.id),
     {},{
@@ -92,6 +97,7 @@ const toggleCreateNewChat = (event: { user: ChatUser }) => {
 }
 
 const handleSendMessage = () => {
+    ignoreWatcher.value = false
     isLoading.value = true;
     if (! chat_id.value) {
         chatStore.handleStoreChat({
@@ -166,6 +172,22 @@ const listenTypingWhisperEvent = () => {
     })
 }
 
+const handleLoadOlderMessages = debounce(() => {
+    ignoreWatcher.value = true
+    messagesPage.value = messagesPage.value + 1
+    if (! chat_id.value || messagesPage.value > (messages?.meta.last_page ?? 0)) return
+
+    chatStore.handleLoadOlderMessages({
+        page: messagesPage.value,
+        chat_id: chat_id.value,
+    }).then((data: any) => {
+        localMessages.value.unshift(...data.data)
+        scrollToBottom(scrollAreaRef, true, 200)
+    })
+    .catch(error => {})
+    .finally(() => {})
+})
+
 watch(() => joinedUser.value, (value) => {
     if (! value) return
     activeRecipients.value.push(value)
@@ -195,6 +217,7 @@ watchEffect(() => {
 })
 
 watch(() => localMessages.value.length, () => {
+    if (ignoreWatcher.value) return
     scrollToBottom(scrollAreaRef)
 })
 
@@ -211,6 +234,7 @@ watch(() => chat_id.value, (newValue, oldValue) => {
 })
 
 watch(() => eventMessageHandler()?.message.id, (value) => {
+    ignoreWatcher.value = false
     const newMessage = eventMessageHandler();
     if (! newMessage) return
 
@@ -312,6 +336,13 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
                                 <ScrollArea class="flex flex-1 overflow-auto" ref="scrollAreaRef" v-if="!isNewChat && localMessages.length">
+                                    <WhenVisible @visible="handleLoadOlderMessages()"
+                                        v-if="(messages?.meta.last_page ?? 0) > messagesPage"
+                                    >
+                                        <div class="flex justify-center text-muted-foreground items-center text-xs py-3">
+                                            <LoaderCircle class="mr-1 animate-spin text-muted-foreground"/> Loading..
+                                        </div>
+                                    </WhenVisible>
                                     <ChatBubble
                                         v-for="(message, index) in localMessages"
                                         :key="message.id"
