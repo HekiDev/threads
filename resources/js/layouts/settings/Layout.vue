@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 
@@ -45,8 +44,6 @@ const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.locati
                     </Button>
                 </nav>
             </aside>
-
-            <Separator class="md:hidden" />
 
             <div class="flex-1 w-full lg:w-3/4">
                 <section class="w-full lg:w-3/4 space-y-3">

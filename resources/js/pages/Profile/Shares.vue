@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -30,7 +30,9 @@ const activeTab = ref(props.tab);
 
         <SettingsLayout>
             <ProfileLayout :activeTab="activeTab" :user="props.user">
-                Shares
+                <div class="px-5 py-4 bg-accent/20 rounded-lg border text-muted-foreground text-sm text-center">
+                    Not threads yet.
+                </div>
             </ProfileLayout>
         </SettingsLayout>
     </AppLayout>

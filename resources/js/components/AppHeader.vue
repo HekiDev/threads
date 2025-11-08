@@ -48,11 +48,11 @@ const mainNavItems: NavItem[] = [
         href: '/chats',
         icon: MessageCircle,
     },
-    {
-        title: 'Activity',
-        href: '/activity',
-        icon: Heart,
-    },
+    // {
+    //     title: 'Activity',
+    //     href: '/activity',
+    //     icon: Heart,
+    // },
     {
         title: 'Profile',
         href: '/settings/profile',
@@ -61,7 +61,7 @@ const mainNavItems: NavItem[] = [
 ];
 
 onMounted(() => {
-    console.log(isCurrentRoute.value('/'));
+    // console.log(isCurrentRoute.value('/'));
     
 });
 </script>

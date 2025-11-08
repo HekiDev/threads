@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Http\Resources\UserProfileResource;
 use App\Models\User;
+use App\Services\ThreadService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,10 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(
+        private ThreadService $threadService
+    ) {}
+
     /**
      * Show the user's profile settings page.
      */
@@ -23,11 +28,16 @@ class ProfileController extends Controller
     {
         $user = User::withCount('followers')->find(auth()->id());
 
+        $data = $this->threadService->getThreads($user, true);
+
         return Inertia::render('settings/Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'tab' => 'threads',
             'user' => new UserProfileResource($user),
+            'threads' => Inertia::deepMerge($data),
+            'currentPage' => $data->currentPage(),
+            'lastPage' => $data->lastPage(),
         ]);
     }
 
@@ -89,9 +99,14 @@ class ProfileController extends Controller
     {
         $user = User::withCount('followers')->find(auth()->id());
 
+        $data = $this->threadService->getThreads($user, true, true);
+
         return Inertia::render('Profile/Replies', [
             'tab' => 'replies',
             'user' => new UserProfileResource($user),
+            'threads' => Inertia::deepMerge($data),
+            'currentPage' => $data->currentPage(),
+            'lastPage' => $data->lastPage(),
         ]);
     }
 
@@ -99,9 +114,14 @@ class ProfileController extends Controller
     {
         $user = User::withCount('followers')->find(auth()->id());
 
+        $data = $this->threadService->getThreads($user, true, false, true);
+
         return Inertia::render('Profile/Media', [
             'tab' => 'media',
             'user' => new UserProfileResource($user),
+            'threads' => Inertia::deepMerge($data),
+            'currentPage' => $data->currentPage(),
+            'lastPage' => $data->lastPage(),
         ]);
     }
 

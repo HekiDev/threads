@@ -56,7 +56,7 @@ class ThreadService
             ->toResourceCollection(ThreadUserResource::class);
     }
 
-    public function getThreads($user)
+    public function getThreads($user, $isMine = false, $hasReply = false, $hasMedia = false)
     {
         return Thread::query()
             ->withCount('comments')
@@ -79,6 +79,19 @@ class ThreadService
                 'topic:id,name',
                 'attachments:id,url,type,attachable_id,attachable_type',
             ])
+            ->when($isMine, function ($query) use ($user, $hasReply, $hasMedia) {
+                $query->when(! $hasReply && ! $hasMedia, function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                });
+                $query->when($hasReply, function ($query) use ($user) {
+                    $query->whereRelation('comments', 'user_id', $user->id);
+                });
+                $query->when($hasMedia, function ($query) use ($user) {
+                    $query->whereHas('attachments', function ($query) use ($user) {
+                        $query->where('userable_id', $user->id);
+                    });
+                });
+            })
             ->latest()
             ->paginate(10)
             ->toResourceCollection();

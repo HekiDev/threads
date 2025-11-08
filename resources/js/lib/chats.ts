@@ -1,5 +1,6 @@
 import { SingleChat } from "@/types/chat"
 import { nextTick } from "vue"
+import { router } from '@inertiajs/vue3'
 
 export function scrollToBottom(scrollAreaRef: any, slightly: boolean = false, offset: number = 0) {
     const el = (scrollAreaRef.value as any)?.$el || scrollAreaRef.value
@@ -130,4 +131,14 @@ export function formatMessageDate(dateString: any) {
         day: 'numeric',
         year: 'numeric',
     }).format(date)
+}
+
+export function handleSearchChat(search: string) {
+    router.reload({
+        data: {
+            search: search
+        },
+        only: ['chats'],
+        preserveUrl: true,
+    })
 }

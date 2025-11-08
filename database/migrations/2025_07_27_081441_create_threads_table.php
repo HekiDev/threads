@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('threads', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignIdFor(User::class)->constrained();
-            $table->foreignIdFor(ThreadTopic::class)->nullable()->constrained();
+            $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(ThreadTopic::class)->nullable()->constrained()->cascadeOnDelete();
             $table->string('title')->nullable();
             $table->longText('description')->nullable();
             $table->timestamps();

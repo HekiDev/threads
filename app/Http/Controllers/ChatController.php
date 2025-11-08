@@ -23,12 +23,17 @@ class ChatController extends Controller
         private ChatService $chatService
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $auth = auth()->user();
 
         $chats = Chat::query()
             ->whereRelation('members', 'user_id', $auth->id)
+            ->when($request->search, function($query, $search) {
+                $query->whereHas('members.user', function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%");
+                });
+            })
             ->with([
                 'members' => function ($query) use ($auth) {
                     $query->where('user_id', '!=', $auth->id);

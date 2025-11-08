@@ -2,6 +2,7 @@
 import AppContent from '@/components/AppContent.vue';
 import AppHeader from '@/components/AppHeader.vue';
 import AppShell from '@/components/AppShell.vue';
+import AppFooter from '@/components/AppFooter.vue';
 import type { BreadcrumbItemType } from '@/types';
 
 interface Props {
@@ -14,10 +15,11 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-    <AppShell class="flex-col">
+    <AppShell class="flex-col relative">
         <AppHeader :breadcrumbs="breadcrumbs" />
         <AppContent>
             <slot />
         </AppContent>
+        <AppFooter />
     </AppShell>
 </template>

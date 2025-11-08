@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import Avatar from '@/components/Avatar.vue'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator';
 import { Heart, Ellipsis, AtSign, UsersRound, UserCheck } from 'lucide-vue-next';
 
-import { useCreateThreadStore } from '@/store/useCreateThreadStore';
 import { usePage } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
-const threadStore = useCreateThreadStore();
 
 const pageProps = <any>usePage().props;
 const totalThreadCount = pageProps?.totalThreads ?? '0';
@@ -18,9 +14,9 @@ const followers = pageProps?.followers?.data ?? [];
 
 <template>
     <slot name="header" />
-    <div class="flex flex-col space-y-8 md:space-y-4 lg:flex-row lg:space-y-0 lg:space-x-4">
+    <div class="flex flex-col gap-4 lg:flex-row">
         <section class="w-full lg:w-1/4">
-            <nav class="flex flex-col gap-4">
+            <nav class="grid grid-cols-2 lg:grid-cols-1 gap-4">
                 <div class="p-4 bg-accent/20 border rounded-lg">
                     <div class="flex justify-between items-center">
                         <h1 class="font-semibold text-sm">Threads</h1>
@@ -38,7 +34,6 @@ const followers = pageProps?.followers?.data ?? [];
             </nav>
         </section>
 
-        <Separator class="md:hidden" />
         <section class="w-full lg:w-3/4">
             <slot name="content" />
         </section>
@@ -65,7 +60,7 @@ const followers = pageProps?.followers?.data ?? [];
                     </span>
                 </div>
                 <div v-else class="flex flex-wrap gap-2">
-                    <p class="w-full text-xs text-muted-foreground text-center">You don't have followers yet</p>
+                    <p class="w-full text-sm text-muted-foreground text-center">You don't have followers yet</p>
                 </div>
             </div>
             <div class="flex flex-col p-4 bg-accent/20 border rounded-lg gap-4">
@@ -89,7 +84,7 @@ const followers = pageProps?.followers?.data ?? [];
                     </span>
                 </div>
                 <div v-else class="flex flex-wrap gap-2">
-                    <p class="w-full text-xs text-muted-foreground text-center">You don't follow anyone yet</p>
+                    <p class="w-full text-sm text-muted-foreground text-center">You don't follow anyone yet</p>
                 </div>
             </div>
         </section>

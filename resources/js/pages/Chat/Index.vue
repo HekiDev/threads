@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
-import { scrollToBottom, updateAndResortChats } from '@/lib/chats';
+import { scrollToBottom, updateAndResortChats, handleSearchChat } from '@/lib/chats';
 import {
     joinedUser,
     leavedUser,
@@ -40,6 +40,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
         href: '/chats',
     },
 ];
+const search = ref<string>('');
 const user_id = ref(usePage().props.auth.user.id ?? 0);
 const message = ref<string>('');
 const isLoading = ref<boolean>(false);
@@ -298,7 +299,11 @@ onBeforeUnmount(() => {
                                 </div>
                                 <div class="flex">
                                     <div class="relative w-full items-center">
-                                        <Input id="search" type="text" placeholder="Search chats" class="pl-8 focus:flex-1" />
+                                        <Input id="search" type="text" placeholder="Search chats" class="pl-8 focus:flex-1"
+                                            v-model="search"
+                                            @keydown.enter.exact.prevent="handleSearchChat(search)"
+                                            @keydown.shift.enter.stop
+                                        />
                                         <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
                                             <Search class="size-4 text-muted-foreground" />
                                         </span>

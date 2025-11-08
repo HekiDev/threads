@@ -190,7 +190,7 @@ onUpdated(() => {
                     <DropdownMenuTrigger :as-child="true" @click.stop>
                         <Avatar :user="post.user" class="cursor-pointer" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" class="w-56">
+                    <DropdownMenuContent align="start" class="w-56" v-if="user.id !== post.user.id">
                         <div class="flex flex-col gap-3 p-3">
                             <div class="flex gap-2 justify-between items-center">
                                 <div>
