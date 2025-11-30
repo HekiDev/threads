@@ -11,4 +11,9 @@ class ThreadTopic extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    public function threads()
+    {
+        return $this->hasMany(Thread::class);
+    }
 }

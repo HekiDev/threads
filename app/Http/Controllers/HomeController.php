@@ -41,6 +41,7 @@ class HomeController extends Controller
             'totalReactions' => $totalReactions,
             'following' => $this->threadService->getFollowing($user),
             'followers' => $this->threadService->getFollowers($user),
+            'popularTopics' => $this->threadService->getPopularTopics(),
         ]);
     }
 
@@ -68,6 +69,7 @@ class HomeController extends Controller
             'totalReactions' => $totalReactions,
             'following' => $this->threadService->getFollowing($user),
             'followers' => $this->threadService->getFollowers($user),
+            'popularTopics' => $this->threadService->getPopularTopics(),
         ]);
     }
 

@@ -9,8 +9,10 @@ use App\Models\CommentReaction;
 use App\Models\Thread;
 use App\Models\ThreadComment;
 use App\Models\ThreadCommentReply;
+use App\Models\ThreadTopic;
 use App\Models\ThreadView;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Number;
 
@@ -54,6 +56,17 @@ class ThreadService
     {
         return $user->followers()->limit(10)->get()
             ->toResourceCollection(ThreadUserResource::class);
+    }
+
+    public function getPopularTopics()
+    {
+        return ThreadTopic::query()
+            ->withCount(['threads' => function ($query) {
+                $query->whereMonth('created_at', Carbon::now()->month);
+            }])
+            ->orderByDesc('threads_count')
+            ->limit(5)
+            ->get();
     }
 
     public function getThreads($user, $isMine = false, $hasReply = false, $hasMedia = false)

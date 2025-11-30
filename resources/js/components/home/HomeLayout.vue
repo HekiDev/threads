@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Avatar from '@/components/Avatar.vue'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Heart, Ellipsis, AtSign, UsersRound, UserCheck } from 'lucide-vue-next';
 
 import { usePage } from '@inertiajs/vue3';
@@ -10,12 +11,13 @@ const totalThreadCount = pageProps?.totalThreads ?? '0';
 const totalReactionCount = pageProps?.totalReactions ?? '0';
 const following = pageProps?.following?.data ?? [];
 const followers = pageProps?.followers?.data ?? [];
+const popularTopics = pageProps?.popularTopics ?? [];
 </script>
 
 <template>
     <slot name="header" />
     <div class="flex flex-col gap-4 lg:flex-row">
-        <section class="w-full lg:w-1/4">
+        <section class="w-full lg:w-1/4 space-y-3">
             <nav class="grid grid-cols-2 lg:grid-cols-1 gap-4">
                 <div class="p-4 bg-accent/20 border rounded-lg">
                     <div class="flex justify-between items-center">
@@ -32,6 +34,17 @@ const followers = pageProps?.followers?.data ?? [];
                     <p class="text-muted-foreground text-sm">{{ totalReactionCount }}</p>
                 </div>
             </nav>
+            <div class="flex flex-col gap-2">
+                <p class="text-sm text-muted-foreground">Popular topics this month</p>
+                <div class="flex flex-wrap gap-1">
+                    <Badge variant="outline" class="py-1 text-sm"
+                        v-for="topic in popularTopics"
+                        :key="topic.id"
+                    >
+                        {{ topic.name }}
+                    </Badge>
+                </div>
+            </div>
         </section>
 
         <section class="w-full lg:w-3/4">
