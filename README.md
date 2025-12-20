@@ -1,18 +1,33 @@
-Threads social media app with realtime chat app
+# Threads – Social Media App with Realtime Chat
 
-Teck stack:
-Laravel 12 + Inertia Js 2.0 + Vue Js 3
+A Threads-inspired social media application featuring realtime chat functionality.
 
-Requirements:
-PHP verions 8.3 and up
-Node JS 20.0 and up
+## 🛠 Tech Stack
 
-Running the project commands:
+- **Backend:** Laravel 12  
+- **Frontend:** Inertia.js 2.0 + Vue.js 3  
+- **Realtime & Jobs:** Laravel Reverb, Laravel Queues  
+
+## ✅ Requirements
+
+Make sure the following are installed on your machine:
+
+- **PHP:** 8.3 or higher  
+- **Node.js:** 20.0 or higher  
+- **Composer**
+- **NPM**
+
+## 🚀 Installation
+
+Install backend and frontend dependencies:
+
+```bash
 composer install
 npm install
 npm run dev
 php artisan serve
-
-When the project is running commands:
+```
+run reverb and broadcasting
+```
 php artisan reverb:start
 php artisan queue:work
