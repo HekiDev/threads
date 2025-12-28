@@ -34,4 +34,9 @@ class Chat extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function blocker(): HasOne
+    {
+        return $this->hasOne(ChatBlock::class)->oldestOfMany();
+    }
 }

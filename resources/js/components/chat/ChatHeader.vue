@@ -1,16 +1,40 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button'
-import { EllipsisVertical } from 'lucide-vue-next'
-import { type ChatUser } from '@/types/chat';
+import { EllipsisVertical, Ban, RotateCcw } from 'lucide-vue-next'
+import { type ChatUser, type ShowChat } from '@/types/chat';
 import Avatar from '../Avatar.vue';
 import TypingIndicator from './TypingIndicator.vue';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { useChatStore } from '@/store/useChatStore';
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
-const { chat_id = null, user, isTyping = false, typingUserId = null } = defineProps<{
+const { chat_id = null, user, isTyping = false, typingUserId = null, chat } = defineProps<{
     chat_id: number | null,
     user: ChatUser,
     isTyping: boolean,
     typingUserId: number | null,
+    chat: ShowChat,
 }>();
+
+const chatStore = useChatStore();
+const isChatBlocked = defineModel('isChatBlocked', { type: Boolean, default: false });
+const auth = usePage().props.auth;
+
+const handleBlockUser = () => {
+    if (! chat_id) return;
+
+    chatStore.blockUser({
+        user_id: user.id,
+        chat_id: chat_id,
+    }).then(() => {
+        if (blockedByMe.value) {
+            isChatBlocked.value = ! isChatBlocked.value;
+        }
+    })
+}
+
+const blockedByMe = computed(() => isChatBlocked.value && chat.blocker_user_id === auth.user.id);
 </script>
 
 <template>
@@ -36,8 +60,20 @@ const { chat_id = null, user, isTyping = false, typingUserId = null } = definePr
                 </div>
             </div>
         </div>
-        <Button variant="outline" v-if="chat_id">
-            <EllipsisVertical />
-        </Button>
+        <DropdownMenu>
+            <DropdownMenuTrigger :as-child="true">
+                <Button variant="outline" v-if="chat_id">
+                    <EllipsisVertical />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-44">
+                <DropdownMenuItem @select="handleBlockUser()">
+                    <Ban v-if="!blockedByMe"/>
+                    <RotateCcw v-else/>
+                    {{ blockedByMe ? 'Unblock' : 'Block' }}
+                    <span class="font-bold truncate text-ellipsis">{{ user.name }}</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     </div>
 </template>

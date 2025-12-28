@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Search, ArrowLeft, LoaderCircle } from 'lucide-vue-next'
 import { type BreadcrumbItem } from '@/types';
-import { type ChatUser, type Chat, type SingleChat, type ChatMessage, SingleMessage } from '@/types/chat';
+import { type ChatUser, type Chat, type SingleChat, type ChatMessage, SingleMessage, ShowChat } from '@/types/chat';
 import ChatBubble from '@/components/chat/ChatBubble.vue';
 import ChatInput from '@/components/chat/ChatInput.vue';
 import CreateChat from '@/components/chat/CreateChat.vue';
@@ -28,10 +28,10 @@ import { useChatStore } from '@/store/useChatStore';
 import WhenVisible from '@/components/WhenVisible.vue';
 import { debounce } from '@/lib/debounce';
 
-const { chats, messages, active_chat_id = null } = defineProps<{
+const { chats, messages, chat = null } = defineProps<{
     chats: Chat;
     messages?: ChatMessage;
-    active_chat_id?: number | null;
+    chat?: ShowChat;
 }>();
 const chatStore = useChatStore();
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -47,7 +47,8 @@ const isLoading = ref<boolean>(false);
 const newChatDialog = ref<boolean>(false);
 const isNewChat = ref<boolean>(false);
 const hasSelectedChat = ref<boolean>(false);
-const chat_id = ref<number|null>(active_chat_id);
+const chat_id = ref<number|null>(chat?.id ?? 0);
+const isChatBlocked = ref<boolean>(false);
 const user = ref<ChatUser>({
     id: 0,
     name: '',
@@ -79,7 +80,7 @@ const handleGetChatMessages = (chat: SingleChat) => {
         preserveUrl: true,
         preserveState: true,
         preserveScroll: true,
-        only: ['messages', 'active_chat_id'],
+        only: ['messages', 'chat'],
         onStart: () => isLoading.value = true,
         onSuccess: () => {
             isLoading.value = false;
@@ -95,6 +96,7 @@ const toggleCreateNewChat = (event: { user: ChatUser }) => {
     isNewChat.value = true
     newChatDialog.value = false
     hasSelectedChat.value = true
+    isChatBlocked.value = false
 }
 
 const handleSendMessage = () => {
@@ -211,6 +213,11 @@ watch(() => leavedUser.value, (value) => {
 watch(() => messages, (value: any) => {
     if (! messages) return
     localMessages.value = value.data;
+})
+
+watch(() => chat, (value: ShowChat | null) => {
+    if (! value) return;
+    isChatBlocked.value = value.is_blocked;
 })
 
 watchEffect(() => {
@@ -334,10 +341,13 @@ onBeforeUnmount(() => {
                                         <ArrowLeft />
                                     </Button>
                                     <ChatHeader
+                                        v-if="chat"
                                         :chat_id="chat_id"
                                         :user="user"
                                         :isTyping="isTyping"
                                         :typingUserId="typingUserId"
+                                        :chat="chat"
+                                        v-model:isChatBlocked="isChatBlocked"
                                     />
                                 </div>
                                 <ScrollArea class="flex flex-1 overflow-auto" ref="scrollAreaRef" v-if="!isNewChat && localMessages.length">
@@ -361,13 +371,17 @@ onBeforeUnmount(() => {
                                     :title="`Chat with ${user.name }`"
                                     description="Start a conversation with this user."
                                 />
-                                <ChatInput 
+                                <ChatInput
+                                    v-if="!isChatBlocked"
                                     ref="chatInputRef"
                                     v-model:message="message"
                                     :disabled="isLoading"
                                     @sendMessage="handleSendMessage()"
                                     @sendTypingWhiper="sendTypingWhisperEvent()"
                                 />
+                                <div v-else class="text-center text-muted-foreground text-sm">
+                                    Chatting with this user is unavailable.
+                                </div>
                             </div>
                             <EmptyChat
                                 v-else

@@ -56,3 +56,10 @@ export interface SingleChat {
         };
     }
 }
+
+export interface ShowChat {
+    id: number;
+    user_id: number;
+    is_blocked: boolean;
+    blocker_user_id: number | null;
+}

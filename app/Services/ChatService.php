@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Chat;
+use App\Models\ChatBlock;
 use App\Models\ChatMessageStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -121,6 +122,21 @@ class ChatService
             'received_at' => now(),
             'read_at' => now(),
         ]);
+    }
+
+    public function isBlocked($auth, $chat_id, $recipient = null)
+    {
+        return ChatBlock::where('chat_id', $chat_id)
+            ->where(function ($query) use ($auth) {
+                $query->where('blocked_user_id', $auth->id)
+                    ->orWhere('blocker_user_id', $auth->id);
+            })
+            ->when($recipient, function ($query) use ($recipient) {
+                $query->orWhere(function ($query) use ($recipient) {
+                    $query->where('blocked_user_id', $recipient->user_id)
+                        ->orWhere('blocker_user_id', $recipient->user_id);
+                });
+            })->exists();
     }
 
     public function getSubsribedUsers($chat_id)

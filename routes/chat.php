@@ -12,5 +12,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('store', [ChatController::class, 'storeChat'])->name('chat.store');
         Route::post('/{chat}/store-message', [ChatController::class, 'storeChatMessage'])->name('chat.store-message');
+        Route::post('/block-user', [ChatController::class, 'blockUser'])->name('chat.block-user');
     });
 });

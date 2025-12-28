@@ -7,7 +7,9 @@ use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatResource;
 use App\Http\Resources\SearchChatUserResource;
 use App\Http\Resources\SentMessageResource;
+use App\Http\Resources\ShowChatResource;
 use App\Models\Chat;
+use App\Models\ChatBlock;
 use App\Models\ChatMember;
 use App\Models\ChatMessage;
 use App\Models\User;
@@ -15,6 +17,7 @@ use App\Services\ChatService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class ChatController extends Controller
@@ -73,6 +76,8 @@ class ChatController extends Controller
 
         $this->chatService->updateUnreadMessages($auth, $chat);
 
+        $chat->load('blocker');
+
         $messages = ChatMessage::query()
             ->select([
                 'chat_messages.*',
@@ -92,8 +97,8 @@ class ChatController extends Controller
         $messages->setCollection($messages->getCollection()->reverse());
 
         return Inertia::render('Chat/Index', [
-            'active_chat_id' => $chat->id,
             'messages' => ChatMessageResource::collection($messages),
+            'chat' => new ShowChatResource($chat, $auth),
         ]);
     }
 
@@ -180,6 +185,13 @@ class ChatController extends Controller
         $auth = auth()->user();
 
         $chat->load(['members:id,user_id,chat_id']);
+        $recipient = collect($chat->members)->firstWhere('user_id', '!=', $auth->id);
+
+        if($this->chatService->isBlocked($auth, $chat->id, $recipient)) {
+            throw ValidationException::withMessages([
+                'message' => 'Chatting with this user is not available.',
+            ]);
+        }
 
         $message = $chat->messages()->create([
             'user_id' => $auth->id,
@@ -188,7 +200,6 @@ class ChatController extends Controller
 
         $newMessage = new SentMessageResource($message->load('user:id,name,avatar'));
 
-        $recipient = collect($chat->members)->firstWhere('user_id', '!=', $auth->id);
         broadcast(new ChatMessageEvent($recipient->user_id, $chat->id, $newMessage))->toOthers();
 
         $recipients = $this->chatService->getSubsribedUsers($chat->id);
@@ -229,5 +240,32 @@ class ChatController extends Controller
             ->toResourceCollection(SearchChatUserResource::class);
 
         return response()->json($data);
+    }
+
+    public function blockUser(Request $request)
+    {
+        $auth = auth()->user();
+        $user_id = $request->user_id;
+        $chat_id = $request->chat_id;
+
+        $block = ChatBlock::where([
+            'chat_id' => $chat_id,
+            'blocker_user_id' => $auth->id,
+            'blocked_user_id' => $user_id,
+        ]);
+
+        if ($block->exists()) {
+            $block->delete();
+        } else {
+            ChatBlock::create([
+                'chat_id' => $chat_id,
+                'blocker_user_id' => $auth->id,
+                'blocked_user_id' => $user_id,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'User blocked successfully.',
+        ], 201);
     }
 }

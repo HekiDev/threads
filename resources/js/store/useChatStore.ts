@@ -72,10 +72,26 @@ export const useChatStore = defineStore('chatStore', () => {
         })
     }
 
+    const blockUser = async({ user_id, chat_id }: { user_id: number, chat_id: number }) => {
+        return await new Promise((resolve, reject) => {
+            axios.post(route('chat.block-user'), {
+                user_id: user_id,
+                chat_id: chat_id,
+            })
+            .then(response => {
+                resolve(response.data);
+            })
+            .catch(errs => {
+                reject(errs.response.data)
+            })
+        })
+    }
+
     return {
         handleSearchUsers,
         handleStoreChat,
         handleStoreChatMessage,
         handleLoadOlderMessages,
+        blockUser,
     }
 })
